@@ -105,19 +105,14 @@ namespace GaussianRegression.Core
             Matrix<double> Y = Matrix<double>.Build.DenseOfArray(y);    //a vertical 1-n matrix
 
             //intermediate result
-            /*
             Matrix<double> K_1_multiply_K_inverse = K_1.Multiply(K.Inverse());
             
             double mu = K_1_multiply_K_inverse.Multiply(Y).ToArray()[0, 0];
 
             double sd = K_0.Subtract(K_1_multiply_K_inverse.Multiply(K_1.Transpose())).ToArray()[0, 0];
+
             if(noises != null)
                 sd += noises[x_0];
-                */
-
-            double mu = K_1.Multiply(K_base.Inverse()).Multiply(Y).ToArray()[0, 0];
-
-            double sd = K_0.Subtract(K_1.Multiply(K_base.Inverse()).Multiply(K_1.Transpose())).ToArray()[0, 0];
 
             return new NormalDistribution(mu, sd);
         }
@@ -136,6 +131,7 @@ namespace GaussianRegression.Core
                 if (idx > -1)
                     k_diag[idx, idx] = noise.y;
             }
+            K_diag = Matrix<double>.Build.DenseOfArray(k_diag);
         }
     }
 }

@@ -40,7 +40,7 @@ namespace GaussianRegression.Core
 
         //NOTE must be set null after every time GP is modified
         private Dictionary<Vector<double>, NormalDistribution> lastPredict = null;
-        private static readonly int MAX_HETEROSCEDASTIC_ITERATION = 3;
+        private static readonly int MAX_HETEROSCEDASTIC_ITERATION = 8;
         private static readonly int HETEROSCEDASTIC_POINT_SAMPLE_SIZE = 100;
         //private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.1;
 

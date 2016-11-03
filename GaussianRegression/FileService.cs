@@ -58,16 +58,19 @@ namespace GaussianRegression
             using (StreamWriter sw = File.CreateText(path)) { sw.Write(""); }
         }
 
-        public static string[] convertGPResult(Dictionary<XYPair, NormalDistribution> vars)
+        public static string[] convertGPResult(Dictionary<XYPair, NormalDistribution> vars, List<XYPair> sampled)
         {
             var res = vars.Select(kv =>
             {
                 double upper = kv.Value.mu + 1.96 * kv.Value.sd;
                 double lower = kv.Value.mu - 1.96 * kv.Value.sd;
-                return kv.Key.x.toString() + "," + kv.Key.y + "," + lower + "," + upper;
+                string s = kv.Key.x.toString() + "," + lower + "," + upper + "," + kv.Key.y;
+                if (sampled.Contains(kv.Key))
+                    s += ", " + kv.Key.y;
+                return s;
             }).ToList();
 
-            res.Insert(0, ",Upper,Lower,Actual");
+            res.Insert(0, ",Lower,Upper,Actual,Sampled");
             return res.ToArray();
         }
     }

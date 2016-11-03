@@ -14,7 +14,7 @@ namespace GaussianRegression
     {
         static Random rand = new Random();
         static Func<double, double> f_pure = x => -(x - 134) * (x - 167) / 100.0 + 250;
-        static Func<double, double> f_sd = x => 50 + Math.Exp(x / 100);
+        static Func<double, double> f_sd = x => 30 + Math.Exp(x / 100);
         static Func<double, double> f = x => f_pure(x) + Normal.InvCDF(0, f_sd(x), rand.NextDouble());
 
         static void Main(string[] args)
@@ -33,10 +33,10 @@ namespace GaussianRegression
                 XYPair newPair = new XYPair(newX, y);
 
                 xyPairs.Add(newPair);
-                //if (rand.NextDouble() < 0.15)
-                sampled.Add(newPair);
+                if (rand.NextDouble() < 0.15)
+                    sampled.Add(newPair);
             }
-            CovFunction cf = CovFunction.SquaredExponential(20, 60) + CovFunction.GaussianNoise(10);
+            CovFunction cf = CovFunction.SquaredExponential(80, 60) + CovFunction.GaussianNoise(10);
 
             GP myGP = new GP(sampledValues: sampled, list_x: list_x.ToList(), cov_f: cf,
                 heteroscedastic : true,
@@ -55,10 +55,10 @@ namespace GaussianRegression
                 res.Add(xy, covMatrix.getPosterior(xy.x));
             });
 
-            fs.writeToFile(FileService.convertGPResult(res));
+            fs.writeToFile(FileService.convertGPResult(res, sampled));
             
 
-
+            //Console.Write(f(0));
 
             //Console.ReadLine();
 
