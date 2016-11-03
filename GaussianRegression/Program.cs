@@ -42,7 +42,8 @@ namespace GaussianRegression
             {
                 if (!usedX.Contains(x))
                 {
-                    NormalDistribution nd = m.getPosterior(Utility.V(x));
+                    XYEstimate xyEstimate = m.getPosterior(Utility.V(x));
+                    NormalDistribution nd = new NormalDistribution(xyEstimate.mean, xyEstimate.sd);
                     string newLine = x + "," + (nd.mu - nd.sd * 2) + "," + (nd.mu + nd.sd * 2) + "," +  f_pure(x);
                     fs.writeToFile(newLine);
                 }

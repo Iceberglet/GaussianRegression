@@ -10,6 +10,8 @@ namespace GaussianRegression.Core
 {
     class CovFunction
     {
+
+
         public static CovFunction GaussianNoise(double sigma)
         {
             Random rand = new Random();
@@ -36,9 +38,6 @@ namespace GaussianRegression.Core
 
             return new CovFunction(f);
         }
-
-
-
         
         public static CovFunction operator +(CovFunction f1, CovFunction f2)
         {

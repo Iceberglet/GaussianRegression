@@ -11,11 +11,18 @@ namespace GaussianRegression.Core
     class CovMatrix
     {
         public readonly CovFunction cf;
-        private Matrix<double> K_base;  //A Square Matrix
-        //Matrix<double> K_v; //A vector
-        //Matrix<double> K_0; //Should Be a singleton
-
         private XYPair[] xyPairs = new XYPair[0];
+
+        private Matrix<double> K_base   //A Square Matrix
+        {
+            get { return K_base; }
+            set { K_base = value; K_base_inverse = value.Inverse(); }   //also sets the inverse
+        }
+        private Matrix<double> K_var;   //Input dependent variance!
+
+        //ComputationalHelpers
+        private Matrix<double> K_base_inverse;
+
 
         public CovMatrix(CovFunction cf, List<XYPair> list_xy = null)
         {
@@ -27,7 +34,7 @@ namespace GaussianRegression.Core
         }
 
         //Expand the matrix
-        public void addX(List<XYPair> pairs)
+        private void addX(List<XYPair> pairs)
         {
             if (pairs == null || pairs.Count == 0)
                 throw new Exception("You are adding 0 new elements to the matrix");
@@ -62,13 +69,13 @@ namespace GaussianRegression.Core
             addX(new XYPair[] { xy }.ToList());
         }
 
-        public NormalDistribution getPosterior(Vector<double> x_0)
+        public XYEstimate getPosterior(Vector<double> x_0)
         {
             if (xyPairs.Length == 0)
                 throw new Exception("Cov Matrix is Empty!");
 
-            double[,] k_1 = new double[1, xyPairs.Length];
-            double[,] k_0 = new double[1, 1];
+            double[,] k_1 = new double[1, xyPairs.Length];      //The CovMatrix between this point and known points
+            double[,] k_0 = new double[1, 1];                   //The singleton matrix for this point
             double[,] y = new double[xyPairs.Length, 1];
 
             for (int i = 0; i < xyPairs.Length; ++i)
@@ -82,9 +89,11 @@ namespace GaussianRegression.Core
             Matrix<double> K_0 = Matrix<double>.Build.DenseOfArray(k_0);
             Matrix<double> Y = Matrix<double>.Build.DenseOfArray(y);
 
-            double mu = K_1.Multiply(K_base.Inverse()).Multiply(Y).ToArray()[0, 0];
-            double sd = K_0.Subtract(K_1.Multiply(K_base.Inverse()).Multiply(K_1.Transpose())).ToArray()[0, 0];
-            return new NormalDistribution(mu, sd);
+            Matrix<double> K_1_multiply_K_base_inverse = K_1.Multiply(K_base.Inverse());
+
+            double mu = K_1_multiply_K_base_inverse.Multiply(Y).ToArray()[0, 0];
+            double sd = K_0.Subtract(K_1_multiply_K_base_inverse.Multiply(K_1.Transpose())).ToArray()[0, 0];
+            return new XYEstimate(x_0, mu, sd);
         }
     }
 }
