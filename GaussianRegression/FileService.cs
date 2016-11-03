@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using MathNet.Numerics.LinearAlgebra;
+
+using GaussianRegression.Core;
 
 namespace GaussianRegression
 {
@@ -16,7 +19,7 @@ namespace GaussianRegression
             this.path = path;
         }
 
-        public void writeToFile(string[] lines, bool append = true)
+        public void writeToFile(string[] lines, bool append = false)
         {
             if (!File.Exists(path))
             {
@@ -53,6 +56,19 @@ namespace GaussianRegression
         private void createFile()
         {
             using (StreamWriter sw = File.CreateText(path)) { sw.Write(""); }
+        }
+
+        public static string[] convertGPResult(Dictionary<XYPair, NormalDistribution> vars)
+        {
+            var res = vars.Select(kv =>
+            {
+                double upper = kv.Value.mu + 1.96 * kv.Value.sd;
+                double lower = kv.Value.mu - 1.96 * kv.Value.sd;
+                return kv.Key.x.toString() + "," + kv.Key.y + "," + lower + "," + upper;
+            }).ToList();
+
+            res.Insert(0, ",Upper,Lower,Actual");
+            return res.ToArray();
         }
     }
 }

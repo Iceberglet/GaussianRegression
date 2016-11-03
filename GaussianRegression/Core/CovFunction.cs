@@ -10,8 +10,15 @@ namespace GaussianRegression.Core
 {
     class CovFunction
     {
+        public enum Type
+        {
+            GaussianNoise,
+            SquaredExponential,
+            Matern,
+            Composite
+        }
 
-
+        //Diagonal Constant Jitter Term
         public static CovFunction GaussianNoise(double sigma)
         {
             Random rand = new Random();
@@ -23,7 +30,7 @@ namespace GaussianRegression.Core
                 else return 0;
             };
 
-            return new CovFunction(f);
+            return new CovFunction(f, Type.GaussianNoise);
         }
         
         public static CovFunction SquaredExponential(double l, double sigmaF)
@@ -33,10 +40,10 @@ namespace GaussianRegression.Core
             Func<Vector<double>, Vector<double>, double> f = (a, b) =>
             {
                 double d = (a - b).L2Norm();
-                return sigma2 * Math.Exp( d * d / l2);
+                return sigma2 * Math.Exp(- d * d / l2);
             };
 
-            return new CovFunction(f);
+            return new CovFunction(f, Type.SquaredExponential);
         }
         
         public static CovFunction operator +(CovFunction f1, CovFunction f2)
@@ -45,26 +52,28 @@ namespace GaussianRegression.Core
             {
                 return f1.eval(a, b) + f2.eval(a, b);
             };
-            return new CovFunction(f);
+            return new CovFunction(f, Type.Composite);
         }
 
         public static CovFunction Matern(double l)
         {
             throw new Exception("Not Implemented");
         }
-
-
+        
         // *********** Actual Implementation *************
 
         //public readonly List<Func<Vector<double>, Vector<double>, double>> f_derivatives;
 
+        public readonly Type type;
         public readonly Func<Vector<double>, Vector<double>, double> covarFunction;
         //private int dimension;
 
         //The burden is on user to ensure f does take two vector of N length
-        public CovFunction(Func<Vector<double>, Vector<double>, double> f)//, int dimension)
+        //Only used by the static creators
+        private CovFunction(Func<Vector<double>, Vector<double>, double> f, Type type = Type.Composite)//, int dimension)
         {
             this.covarFunction = f;
+            this.type = type;
             //this.dimension = dimension;
         }
 

@@ -20,15 +20,16 @@ namespace GaussianRegression.Core
         }
     }
 
-    class XYEstimate : XYPair
+    /*
+    class XYEstimate
     {
         public readonly double mean;
         public readonly double sd;
 
-        public XYEstimate(Vector<double> x, double mean, double sd) : base(x, 0)
+        public XYEstimate(double mean, double sd)
         {
             this.mean = mean;
             this.sd = sd;
         }
-    }
+    }*/
 }

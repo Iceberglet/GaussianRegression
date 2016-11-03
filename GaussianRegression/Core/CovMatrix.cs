@@ -11,22 +11,37 @@ namespace GaussianRegression.Core
     class CovMatrix
     {
         public readonly CovFunction cf;
-        private XYPair[] xyPairs = new XYPair[0];
-
-        private Matrix<double> K_base   //A Square Matrix
+        public XYPair[] xyPairs
         {
-            get { return K_base; }
-            set { K_base = value; K_base_inverse = value.Inverse(); }   //also sets the inverse
+            get; private set;
         }
-        private Matrix<double> K_var;   //Input dependent variance!
+        private Dictionary<Vector<double>, double> noises;
+
+        private Matrix<double> K;
+        private Matrix<double> K_base       //A Square Matrix (without input dependent diagonal noise term)
+        {
+            get { return K_B; }
+            set {
+                K_B = value;
+                if(K_diag == null || K_B.ColumnCount != K_diag.ColumnCount)
+                {
+                    K_diag = Matrix<double>.Build.Dense(K_B.RowCount, K_B.ColumnCount);
+                }
+                K = K_B.Add(K_diag);
+                K_inverse = K.Inverse();
+            }   //also sets the inverse
+        }
+        private Matrix<double> K_B;
 
         //ComputationalHelpers
-        private Matrix<double> K_base_inverse;
+        private Matrix<double> K_diag;  //Input dependent variance!
+        private Matrix<double> K_inverse;
 
 
         public CovMatrix(CovFunction cf, List<XYPair> list_xy = null)
         {
             this.cf = cf;
+            this.xyPairs = new XYPair[0];
             if (list_xy != null && list_xy.Count > 0)
             {
                 addX(list_xy);
@@ -69,9 +84,9 @@ namespace GaussianRegression.Core
             addX(new XYPair[] { xy }.ToList());
         }
 
-        public XYEstimate getPosterior(Vector<double> x_0)
+        public NormalDistribution getPosterior(Vector<double> x_0)
         {
-            if (xyPairs.Length == 0)
+            if (xyPairs == null || xyPairs.Length == 0)
                 throw new Exception("Cov Matrix is Empty!");
 
             double[,] k_1 = new double[1, xyPairs.Length];      //The CovMatrix between this point and known points
@@ -85,15 +100,42 @@ namespace GaussianRegression.Core
             }
             k_0[0, 0] = cf.eval(x_0, x_0);
 
-            Matrix<double> K_1 = Matrix<double>.Build.DenseOfArray(k_1);
-            Matrix<double> K_0 = Matrix<double>.Build.DenseOfArray(k_0);
-            Matrix<double> Y = Matrix<double>.Build.DenseOfArray(y);
+            Matrix<double> K_1 = Matrix<double>.Build.DenseOfArray(k_1);    //horizontal matrix
+            Matrix<double> K_0 = Matrix<double>.Build.DenseOfArray(k_0);    //singleton
+            Matrix<double> Y = Matrix<double>.Build.DenseOfArray(y);    //a vertical 1-n matrix
 
-            Matrix<double> K_1_multiply_K_base_inverse = K_1.Multiply(K_base.Inverse());
+            //intermediate result
+            /*
+            Matrix<double> K_1_multiply_K_inverse = K_1.Multiply(K.Inverse());
+            
+            double mu = K_1_multiply_K_inverse.Multiply(Y).ToArray()[0, 0];
 
-            double mu = K_1_multiply_K_base_inverse.Multiply(Y).ToArray()[0, 0];
-            double sd = K_0.Subtract(K_1_multiply_K_base_inverse.Multiply(K_1.Transpose())).ToArray()[0, 0];
-            return new XYEstimate(x_0, mu, sd);
+            double sd = K_0.Subtract(K_1_multiply_K_inverse.Multiply(K_1.Transpose())).ToArray()[0, 0];
+            if(noises != null)
+                sd += noises[x_0];
+                */
+
+            double mu = K_1.Multiply(K_base.Inverse()).Multiply(Y).ToArray()[0, 0];
+
+            double sd = K_0.Subtract(K_1.Multiply(K_base.Inverse()).Multiply(K_1.Transpose())).ToArray()[0, 0];
+
+            return new NormalDistribution(mu, sd);
+        }
+        
+        //Updates the K_diag and predicted noise term for each point
+        public void updateNoise(List<XYPair> noise_z)
+        {
+            noises = new Dictionary<Vector<double>, double>();
+            Vector<double>[] xInSample = xyPairs.Select(pair => pair.x).ToArray();
+            double[,] k_diag = new double[K_base.RowCount, K_base.ColumnCount];
+            foreach(XYPair noise in noise_z)
+            {
+                noises.Add(noise.x, noise.y);
+                //Update the diagonal matrix
+                int idx = Array.IndexOf(xInSample, noise.x);
+                if (idx > -1)
+                    k_diag[idx, idx] = noise.y;
+            }
         }
     }
 }

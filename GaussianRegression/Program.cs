@@ -14,41 +14,49 @@ namespace GaussianRegression
     {
         static Random rand = new Random();
         static Func<double, double> f_pure = x => -(x - 134) * (x - 167) / 100.0 + 250;
-        static Func<double, double> f = x => f_pure(x) + Normal.InvCDF(0, 10, rand.NextDouble());
+        static Func<double, double> f_sd = x => 50 + Math.Exp(x / 100);
+        static Func<double, double> f = x => f_pure(x) + Normal.InvCDF(0, f_sd(x), rand.NextDouble());
 
         static void Main(string[] args)
         {
+            int size = 600;
+            List<XYPair> sampled = new List<XYPair>();
             List<XYPair> xyPairs = new List<XYPair>();
-            List<int> usedX = new List<int>();
-            for(int i = 0; i < 15; ++i)
-            {
-                int x = 20 * i + rand.Next(-2, 2);
-                if (usedX.Contains(x))
-                    continue;
-                usedX.Add(x);
+            Vector<double>[] list_x = new Vector<double>[size];
 
-                xyPairs.Add(new XYPair(
-                    Utility.V(x),
-                    f(x)
-                    )
-                );
+            for (int i = 0; i < size; ++i)
+            {
+                Vector<double> newX = Utility.V(i);
+
+                list_x[i] = newX;
+                double y = f(i);
+                XYPair newPair = new XYPair(newX, y);
+
+                xyPairs.Add(newPair);
+                //if (rand.NextDouble() < 0.15)
+                sampled.Add(newPair);
             }
-            CovMatrix m = new CovMatrix(CovFunction.SquaredExponential(20, 10) + CovFunction.GaussianNoise(2.2), xyPairs);
+            CovFunction cf = CovFunction.SquaredExponential(20, 60) + CovFunction.GaussianNoise(10);
+
+            GP myGP = new GP(sampledValues: sampled, list_x: list_x.ToList(), cov_f: cf,
+                heteroscedastic : true,
+                lengthScale : 60, sigma_f : 20);
 
             //List<int> xs = xyPairs.Select(pair => (int)pair.x.ToArray()[0]).ToList();
             FileService fs = new FileService("Test.csv");
+            //FileService fs2 = new FileService("Sample.csv");
+            //fs2.writeToFile(xyPairs.Select(xy => xy.x.toString() + "," + xy.y).ToArray());
 
-            for(int x = 0; x < 300; ++x)
-            {
-                if (!usedX.Contains(x))
-                {
-                    XYEstimate xyEstimate = m.getPosterior(Utility.V(x));
-                    NormalDistribution nd = new NormalDistribution(xyEstimate.mean, xyEstimate.sd);
-                    string newLine = x + "," + (nd.mu - nd.sd * 2) + "," + (nd.mu + nd.sd * 2) + "," +  f_pure(x);
-                    fs.writeToFile(newLine);
-                }
-            }
+            
+            //var res = myGP.predict();
+            CovMatrix covMatrix = new CovMatrix(cf, sampled);
+            Dictionary<XYPair, NormalDistribution> res = new Dictionary<XYPair, NormalDistribution>();
+            xyPairs.ForEach(xy => {
+                res.Add(xy, covMatrix.getPosterior(xy.x));
+            });
 
+            fs.writeToFile(FileService.convertGPResult(res));
+            
 
 
 

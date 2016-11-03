@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using MathNet.Numerics.Distributions;
 
-namespace GaussianRegression.Core
+namespace GaussianRegression
 {
     //Wrapper Class
     class NormalDistribution

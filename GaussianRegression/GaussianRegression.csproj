@@ -50,8 +50,8 @@
     <Compile Include="Core\CovFunction.cs" />
     <Compile Include="Core\CovMatrix.cs" />
     <Compile Include="Core\GP.cs" />
-    <Compile Include="Core\Utility.cs" />
-    <Compile Include="Core\NormalDistribution.cs" />
+    <Compile Include="Utility\Utility.cs" />
+    <Compile Include="Utility\NormalDistribution.cs" />
     <Compile Include="Core\XYPair.cs" />
     <Compile Include="FileService.cs" />
     <Compile Include="Program.cs" />
