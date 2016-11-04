@@ -15,7 +15,7 @@ namespace GaussianRegression
     {
         static void Main(string[] args)
         {
-            Test.testComplex();
+            Test.testMotor();
 
             Console.WriteLine("End of Execution.");
             //Console.ReadLine();

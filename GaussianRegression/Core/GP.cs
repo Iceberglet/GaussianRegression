@@ -46,8 +46,8 @@ namespace GaussianRegression.Core
 
         //NOTE must be set null after every time GP is modified
         private Dictionary<Vector<double>, NormalDistribution> lastPredict = null;
-        private static readonly int MAX_HETEROSCEDASTIC_ITERATION = 2;
-        private static readonly int HETEROSCEDASTIC_POINT_SAMPLE_SIZE = 100;
+        private static readonly int MAX_HETEROSCEDASTIC_ITERATION = 100;
+        private static readonly int HETEROSCEDASTIC_POINT_SAMPLE_SIZE = 20;
         //private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.1;
 
 
@@ -93,22 +93,16 @@ namespace GaussianRegression.Core
                     varEstimate = Math.Log(varEstimate);
                     noise_z.Add(new XYPair(xyPair.x, varEstimate));
                 }
-
-                //*******************************************For Debugging
-                FileService fs = new FileService("GP_On_Noise_" + counter + ".csv");
-                /*
-                string[] noises = noise_z.OrderBy(z => z.x.Norm(1)).Select(z => z.x.toString() + "," + z.y).ToArray();
-                fs.writeToFile(noises);*/
-
-
+                
                 //2. Construct another Gaussian Process, GP_1 to evaluate them
                 GP gp_for_noise = new GP(sampledValues: noise_z, list_x: this.list_x, cov_f:cov_f,
                     lengthScale : lengthScale, sigma_f : sigma_f, sigma_jitter : sigma_jitter);
 
                 Utility.Log("Performing Variance Regression");
                 resulting_z = gp_for_noise.predict();    //Discard the variance info
-
-                //*******************************************For Debugging
+                
+                /*//*******************************************For Debugging
+                FileService fs = new FileService("GP_On_Noise_" + counter + ".csv");
                 List<string> noiseRaw = new List<string>() { ", GP, Raw" };
                 foreach(var kv in resulting_z)
                 {
@@ -119,9 +113,7 @@ namespace GaussianRegression.Core
                     noiseRaw.Add(s);
                 }
                 fs.writeToFile(noiseRaw.ToArray());//*/
-
-
-
+                
                 Utility.Log("Updating Noise Term in CovMatrix");
                 covMatrix.updateNoise(resulting_z.Select(kv => new XYPair(kv.Key, Math.Exp(kv.Value.mu))).ToList());    //Notice the Exp
 

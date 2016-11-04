@@ -42,7 +42,25 @@ namespace GaussianRegression
 
         public static void testMotor()
         {
-            List<XYPair> values = FileService.readFromFile("Motor.txt");
+            List<XYPair> values = FileService.readFromFile("Motor.txt", separator : '\t');
+            List<Vector<double>> list_x = new List<Vector<double>>();
+            //x value from 2 to 60
+            for (int i = 20; i < 600; i++)
+            {
+                double x = i / 10.0 + 0.05;
+                list_x.Add(Utility.V(x));
+            }
+
+            CovFunction cf = CovFunction.SquaredExponential(8, 20) + CovFunction.GaussianNoise(1);
+
+            GP myGP = new GP(sampledValues: values, list_x: list_x.ToList(), cov_f: cf,
+                heteroscedastic: true,
+                lengthScale: 60, sigma_f: 20);
+            var res = myGP.predict();
+
+            FileService fs = new FileService("Test.csv");
+
+            fs.writeToFile(FileService.convertGPResult(res, values));
         }
 
 

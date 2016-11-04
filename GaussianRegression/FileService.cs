@@ -62,21 +62,32 @@ namespace GaussianRegression
         {
             var xSampled = new Dictionary<Vector<double>, double>();
             sampled.ForEach(xy => xSampled.Add(xy.x, xy.y));
-            var res = vars.Select(kv =>
+
+            var xAndString = new Dictionary<Vector<double>, string>();
+            
+            foreach(var kv in vars)
             {
                 double upper = kv.Value.mu + 1.96 * kv.Value.sd;
                 double lower = kv.Value.mu - 1.96 * kv.Value.sd;
-                string s = kv.Key.toString() + "," + lower + "," + upper; // + "," + kv.Key.y;
-                if (xSampled.ContainsKey(kv.Key))
-                    s += ", " + xSampled[kv.Key];
-                return s;
-            }).ToList();
+                string s = lower + "," + upper; // + "," + kv.Key.y;
+                xAndString.Add(kv.Key, s);
+            }
+
+            foreach(var kv in xSampled)
+            {
+                if (xAndString.ContainsKey(kv.Key))
+                    xAndString[kv.Key] += "," + kv.Value;
+                else xAndString.Add(kv.Key, ",," + kv.Value);
+            }
+
+            var res = xAndString.Select(kv => kv.Key.toString() + "," + kv.Value).ToList();
 
             res.Insert(0, ",Lower,Upper,Sampled");
+
             return res.ToArray();
         }
 
-        public static List<XYPair> readFromFile(string fileName, int xSize = 1)
+        public static List<XYPair> readFromFile(string fileName, int xSize = 1, char separator = ' ')
         {
             //Console.WriteLine(Path.GetTempPath());
             //Console.WriteLine(Directory.GetCurrentDirectory());
@@ -88,7 +99,7 @@ namespace GaussianRegression
             {
                 List<double> x = new List<double>();
                 int xIdx = 0;
-                foreach (var col in row.Trim().Split(' '))
+                foreach (var col in row.Trim().Split(separator))
                 {
                     if (xIdx < xSize)
                     {

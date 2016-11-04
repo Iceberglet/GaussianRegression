@@ -137,9 +137,8 @@ namespace GaussianRegression.Core
                 throw new Exception("Unlikely Results!");
 
             sd = Math.Sqrt(sd);
-
-
-            if (noises != null)
+            
+            if (noises != null && noises.ContainsKey(x_0))
                 sd += noises[x_0];
 
             return new NormalDistribution(mu, sd);
@@ -159,11 +158,11 @@ namespace GaussianRegression.Core
             {
                 if (!noises.ContainsKey(noise.x))
                     noises.Add(noise.x, noise.y);
-                else noises[noise.x] += noise.y;
+                else noises[noise.x] = noise.y;
                 //Update the diagonal matrix
                 int idx = Array.IndexOf(xInSample, noise.x);
                 if (idx > -1)
-                    k_diag[idx, idx] += noise.y;
+                    k_diag[idx, idx] = noise.y;
             }
             K_diag = Matrix<double>.Build.DenseOfArray(k_diag);
             K = K_base.Add(K_diag);
