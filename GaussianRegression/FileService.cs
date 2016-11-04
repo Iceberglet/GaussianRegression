@@ -58,20 +58,53 @@ namespace GaussianRegression
             using (StreamWriter sw = File.CreateText(path)) { sw.Write(""); }
         }
 
-        public static string[] convertGPResult(Dictionary<XYPair, NormalDistribution> vars, List<XYPair> sampled)
+        public static string[] convertGPResult(Dictionary<Vector<double>, NormalDistribution> vars, List<XYPair> sampled)
         {
+            var xSampled = new Dictionary<Vector<double>, double>();
+            sampled.ForEach(xy => xSampled.Add(xy.x, xy.y));
             var res = vars.Select(kv =>
             {
                 double upper = kv.Value.mu + 1.96 * kv.Value.sd;
                 double lower = kv.Value.mu - 1.96 * kv.Value.sd;
-                string s = kv.Key.x.toString() + "," + lower + "," + upper + "," + kv.Key.y;
-                if (sampled.Contains(kv.Key))
-                    s += ", " + kv.Key.y;
+                string s = kv.Key.toString() + "," + lower + "," + upper; // + "," + kv.Key.y;
+                if (xSampled.ContainsKey(kv.Key))
+                    s += ", " + xSampled[kv.Key];
                 return s;
             }).ToList();
 
-            res.Insert(0, ",Lower,Upper,Actual,Sampled");
+            res.Insert(0, ",Lower,Upper,Sampled");
             return res.ToArray();
+        }
+
+        public static List<XYPair> readFromFile(string fileName, int xSize = 1)
+        {
+            //Console.WriteLine(Path.GetTempPath());
+            //Console.WriteLine(Directory.GetCurrentDirectory());
+            string path = Path.Combine(Directory.GetCurrentDirectory(), fileName);
+            
+            String input_grid = File.ReadAllText(path);
+            List<XYPair> xy = new List<XYPair>();
+            foreach (var row in input_grid.Split('\n'))
+            {
+                List<double> x = new List<double>();
+                int xIdx = 0;
+                foreach (var col in row.Trim().Split(' '))
+                {
+                    if (xIdx < xSize)
+                    {
+                        x.Add(double.Parse(col.Trim()));
+                        xIdx++;
+                        continue;
+                    }
+                    else
+                    {
+                        double y = double.Parse(col.Trim());
+                        xy.Add(new XYPair(Vector<double>.Build.DenseOfEnumerable(x), y));
+                        break;
+                    }
+                }
+            }
+            return xy;
         }
     }
 }

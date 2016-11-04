@@ -27,20 +27,21 @@ namespace GaussianRegression.Core
                 {
                     K_diag = Matrix<double>.Build.Dense(K_B.RowCount, K_B.ColumnCount);
                 }
-                K = K_B.Add(K_diag);
-                K_inverse = K.Inverse();
+                K = K_B.Add(K_diag);        //Sets K
+                K_inverse = K.Inverse();    //Sets K_inverse
             }   //also sets the inverse
         }
         private Matrix<double> K_B;
 
         //ComputationalHelpers
-        private Matrix<double> K_diag;  //Input dependent variance!
+        private Matrix<double> K_diag;      //Input dependent variance!
         private Matrix<double> K_inverse;
 
-
-        public CovMatrix(CovFunction cf, List<XYPair> list_xy = null)
+        private double delta;   //For perturbation on sampled points
+        public CovMatrix(CovFunction cf, List<XYPair> list_xy = null, double delta = 0.0005)
         {
             this.cf = cf;
+            this.delta = delta;
             this.xyPairs = new XYPair[0];
             if (list_xy != null && list_xy.Count > 0)
             {
@@ -89,29 +90,56 @@ namespace GaussianRegression.Core
             if (xyPairs == null || xyPairs.Length == 0)
                 throw new Exception("Cov Matrix is Empty!");
 
+            List<Vector<double>> sampled = xyPairs.Select(xy => xy.x).ToList();
+            double mu, sd;
+            Vector<double> usable_x_0 = x_0;
+
+            if (sampled.Contains(x_0))
+            {
+                //TRICK: Perturb it a tiny little bit so that we don't get NAN...
+                usable_x_0 = Utility.Perturb(x_0, delta);
+            }
+
             double[,] k_1 = new double[1, xyPairs.Length];      //The CovMatrix between this point and known points
             double[,] k_0 = new double[1, 1];                   //The singleton matrix for this point
             double[,] y = new double[xyPairs.Length, 1];
 
             for (int i = 0; i < xyPairs.Length; ++i)
             {
-                k_1[0, i] = cf.eval(x_0, xyPairs[i].x);
+                k_1[0, i] = cf.eval(usable_x_0, xyPairs[i].x);
                 y[i, 0] = xyPairs[i].y;
             }
-            k_0[0, 0] = cf.eval(x_0, x_0);
+            k_0[0, 0] = cf.eval(usable_x_0, usable_x_0);
 
             Matrix<double> K_1 = Matrix<double>.Build.DenseOfArray(k_1);    //horizontal matrix
             Matrix<double> K_0 = Matrix<double>.Build.DenseOfArray(k_0);    //singleton
             Matrix<double> Y = Matrix<double>.Build.DenseOfArray(y);    //a vertical 1-n matrix
 
             //intermediate result
-            Matrix<double> K_1_multiply_K_inverse = K_1.Multiply(K.Inverse());
-            
-            double mu = K_1_multiply_K_inverse.Multiply(Y).ToArray()[0, 0];
+            Matrix<double> K_1_multiply_K_inverse = K_1.Multiply(K_inverse);
 
-            double sd = K_0.Subtract(K_1_multiply_K_inverse.Multiply(K_1.Transpose())).ToArray()[0, 0];
+            mu = K_1_multiply_K_inverse.Multiply(Y).ToArray()[0, 0];
 
-            if(noises != null)
+            double k0 = K_0.ToArray()[0, 0];
+            double k0_right = K_1_multiply_K_inverse.Multiply(K_1.Transpose()).ToArray()[0, 0];
+
+            sd = K_0.Subtract(K_1_multiply_K_inverse.Multiply(K_1.Transpose())).ToArray()[0, 0];
+
+            if (double.IsNaN(mu) || double.IsInfinity(mu))
+            {
+                double det_base = K_base.Determinant();
+                double det = K.Determinant();
+                Matrix<double> k1 = K_1_multiply_K_inverse.Multiply(Y);
+                throw new Exception("Unlikely Results!");
+            }
+
+            if (double.IsNaN(sd) || double.IsInfinity(sd))
+                throw new Exception("Unlikely Results!");
+
+            sd = Math.Sqrt(sd);
+
+
+            if (noises != null)
                 sd += noises[x_0];
 
             return new NormalDistribution(mu, sd);
@@ -120,18 +148,27 @@ namespace GaussianRegression.Core
         //Updates the K_diag and predicted noise term for each point
         public void updateNoise(List<XYPair> noise_z)
         {
-            noises = new Dictionary<Vector<double>, double>();
+            if (noises == null)
+                noises = new Dictionary<Vector<double>, double>();
+
             Vector<double>[] xInSample = xyPairs.Select(pair => pair.x).ToArray();
-            double[,] k_diag = new double[K_base.RowCount, K_base.ColumnCount];
+
+            double[,] k_diag = K_diag == null ? new double[K_base.RowCount, K_base.ColumnCount] : K_diag.ToArray();
+
             foreach(XYPair noise in noise_z)
             {
-                noises.Add(noise.x, noise.y);
+                if (!noises.ContainsKey(noise.x))
+                    noises.Add(noise.x, noise.y);
+                else noises[noise.x] += noise.y;
                 //Update the diagonal matrix
                 int idx = Array.IndexOf(xInSample, noise.x);
                 if (idx > -1)
-                    k_diag[idx, idx] = noise.y;
+                    k_diag[idx, idx] += noise.y;
             }
             K_diag = Matrix<double>.Build.DenseOfArray(k_diag);
+            K = K_base.Add(K_diag);
+            //double[] sum = K.Diagonal().ToArray();
+            return;
         }
     }
 }

@@ -9,6 +9,8 @@ namespace GaussianRegression
 {
     static class Utility
     {
+        private static Random rand = new Random();
+
         //**************  Extension Methods  ************************
         public static string toString<T>(this IList<T> list, string separator)
         {
@@ -44,8 +46,19 @@ namespace GaussianRegression
             return Vector<double>.Build.Dense(values);
         }
 
+        public static Vector<double> Perturb(Vector<double> v, double scale = 0)
+        {
+            double[] values = v.ToArray();
+            for(int i = 0; i < values.Length; i++)
+            {
+                double d = scale == 0 ? 0.01 * values[i] : scale;
+                values[i] += d * Math.Sign(rand.NextDouble() - 0.5);
+            }
+            return Vector<double>.Build.Dense(values);
+        }
+
         //combines two lists
-        public static string[] pairwiseAdd(this string[] a, string[] b, string separator = ",")
+        public static string[] PairwiseAdd(this string[] a, string[] b, string separator = ",")
         {
             if (a.Length != b.Length)
                 throw new Exception("Length Mismatch: " + a.Length + " " + b.Length);
@@ -64,5 +77,7 @@ namespace GaussianRegression
             if (login)
                 Console.WriteLine(s);
         }
+
+
     }
 }
