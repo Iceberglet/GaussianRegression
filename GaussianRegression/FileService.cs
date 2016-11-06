@@ -58,7 +58,7 @@ namespace GaussianRegression
             using (StreamWriter sw = File.CreateText(path)) { sw.Write(""); }
         }
 
-        public static string[] convertGPResult(Dictionary<Vector<double>, NormalDistribution> vars, List<XYPair> sampled)
+        public static string[] convertGPResult(Dictionary<LabeledVector, NormalDistribution> vars, List<XYPair> sampled)
         {
             var xSampled = new Dictionary<Vector<double>, double>();
             sampled.ForEach(xy => xSampled.Add(xy.x, xy.y));
@@ -70,7 +70,7 @@ namespace GaussianRegression
                 double upper = kv.Value.mu + 1.96 * kv.Value.sd;
                 double lower = kv.Value.mu - 1.96 * kv.Value.sd;
                 string s = lower + "," + upper; // + "," + kv.Key.y;
-                xAndString.Add(kv.Key, s);
+                xAndString.Add(kv.Key.x, s);
             }
 
             foreach(var kv in xSampled)

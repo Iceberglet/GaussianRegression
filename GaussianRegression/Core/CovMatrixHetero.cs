@@ -65,7 +65,7 @@ namespace GaussianRegression.Core
 
                     for (int i = 0; i < HETEROSCEDASTIC_POINT_SAMPLE_SIZE; i++)
                     {
-                        double sample = Normal.InvCDF(nd.mu, nd.sd, Utility.NextProba());
+                        double sample = Normal.InvCDF(nd.mu, nd.sd, GPUtility.NextProba());
                         varEstimate += Math.Pow((xyPair.y - sample), 2);
                     }
                     varEstimate *= 0.5 / HETEROSCEDASTIC_POINT_SAMPLE_SIZE;

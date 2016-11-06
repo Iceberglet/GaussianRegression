@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 using MathNet.Numerics.Distributions;
 
-namespace GaussianRegression
+namespace GaussianRegression.Core
 {
     //Wrapper Class
-    class NormalDistribution
+    public class NormalDistribution
     {
         public readonly double mu;
         public readonly double sd;

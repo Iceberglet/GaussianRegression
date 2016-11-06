@@ -54,7 +54,7 @@
     <Compile Include="Core\Hyperparam.cs" />
     <Compile Include="Core\ModelOptimizer.cs" />
     <Compile Include="Test.cs" />
-    <Compile Include="Utility\Utility.cs" />
+    <Compile Include="Utility\GPUtility.cs" />
     <Compile Include="Utility\NormalDistribution.cs" />
     <Compile Include="Core\XYPair.cs" />
     <Compile Include="FileService.cs" />

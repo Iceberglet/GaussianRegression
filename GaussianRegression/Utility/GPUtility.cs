@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using MathNet.Numerics.LinearAlgebra;
 
-namespace GaussianRegression
+namespace GaussianRegression.Core
 {
-    static class Utility
+    public static class GPUtility
     {
         private static Random rand = new Random();
 

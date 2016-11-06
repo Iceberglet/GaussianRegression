@@ -8,7 +8,7 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace GaussianRegression.Core
 {
-    class XYPair
+    public class XYPair
     {
         public readonly Vector<double> x;
         public readonly double y;
@@ -20,16 +20,15 @@ namespace GaussianRegression.Core
         }
     }
 
-    /*
-    class XYEstimate
+    public class LabeledVector
     {
-        public readonly double mean;
-        public readonly double sd;
+        public readonly int idx;
+        public Vector<double> x;
 
-        public XYEstimate(double mean, double sd)
+        public LabeledVector(int i, Vector<double> x)
         {
-            this.mean = mean;
-            this.sd = sd;
+            this.idx = i;
+            this.x = x;
         }
-    }*/
+    }
 }

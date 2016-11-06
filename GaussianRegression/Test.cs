@@ -19,12 +19,12 @@ namespace GaussianRegression
         public static void testSimple()
         {
             List<XYPair> values = new List<XYPair>();
-            List<Vector<double>> list_x = new List<Vector<double>>();
+            List<LabeledVector> list_x = new List<LabeledVector>();
             for(int i = 1; i < 500; i++)
             {
                 double xx = i / 10.0;
-                Vector<double> x = Utility.V(xx);
-                list_x.Add(x);
+                Vector<double> x = GPUtility.V(xx);
+                list_x.Add(new LabeledVector(0, x));
                 if (i % 20 == 0)
                     values.Add(new XYPair(x, xx * xx + (rand.NextDouble() - 1) * 500));
             }
@@ -49,15 +49,15 @@ namespace GaussianRegression
             for (int i = 20; i < 600; i++)
             {
                 double x = i / 10.0 + 0.05;
-                list_x.Add(Utility.V(x));
+                list_x.Add(GPUtility.V(x));
             }
-
+            
             var SF = Math.Sqrt(Statistics.Variance(values.Select(xy => xy.y))) / 2;
             //Utility.Log("Variance determined as: " + SF);
 
             CovFunction cf = CovFunction.SquaredExponential(new LengthScale(8), new SigmaF(20)) + CovFunction.GaussianNoise(new SigmaJ(1));
 
-            GP myGP = new GP(sampledValues: values, list_x: list_x.ToList(), cov_f: cf,
+            GP myGP = new GP(sampledValues: values, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
                 heteroscedastic: true, estimateHyperPara: false,
                 lengthScale: 60, sigma_f: 20);
             var res = myGP.predict();
@@ -81,7 +81,7 @@ namespace GaussianRegression
 
             for (int i = 0; i < size; ++i)
             {
-                Vector<double> newX = Utility.V(i);
+                Vector<double> newX = GPUtility.V(i);
 
                 list_x[i] = newX;
                 double y = f(i);
@@ -93,7 +93,7 @@ namespace GaussianRegression
             }
             CovFunction cf = CovFunction.SquaredExponential(new LengthScale(40), new SigmaF(10)) + CovFunction.GaussianNoise(new SigmaJ(10));
             
-            GP myGP = new GP(sampledValues: sampled, list_x: list_x.ToList(), cov_f: cf,
+            GP myGP = new GP(sampledValues: sampled, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
                 heteroscedastic: true,
                 lengthScale: 40, sigma_f: 60);
             var res = myGP.predict();

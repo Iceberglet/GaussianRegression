@@ -10,7 +10,7 @@ using MathNet.Numerics.Statistics;
 
 namespace GaussianRegression.Core
 {
-    class GP
+    public class GP
     {
         private bool heteroscedastic;
         private bool estimateHyperPara;
@@ -18,12 +18,12 @@ namespace GaussianRegression.Core
         private double sigma_f;
         private double sigma_jitter;
         
-        private List<Vector<double>> list_x;
+        private List<LabeledVector> list_x;
 
         private readonly CovFunction cov_f;
         private CovMatrix covMatrix;
 
-        public GP(List<XYPair> sampledValues, List<Vector<double>> list_x, CovFunction cov_f,
+        public GP(List<XYPair> sampledValues, List<LabeledVector> list_x, CovFunction cov_f,
             bool estimateHyperPara = false, bool heteroscedastic = false,           //configs
             double lengthScale = 1, double sigma_f = 1, double sigma_jitter = 1,       //hyper parameters
             double delta = 0.0005
@@ -54,11 +54,11 @@ namespace GaussianRegression.Core
             if (heteroscedastic)
                 ((CovMatrixHetero)covMatrix).performNoiseAnalysis();
 
-            Utility.Log("Final Hypers: " + string.Join(", ", cov_f.param.Select(kv => kv.Value.value).ToArray()));
+            GPUtility.Log("Final Hypers: " + string.Join(", ", cov_f.param.Select(kv => kv.Value.value).ToArray()));
         }
 
         //NOTE must be set null after every time GP is modified
-        private Dictionary<Vector<double>, NormalDistribution> lastPredict = null;
+        private Dictionary<LabeledVector, NormalDistribution> lastPredict = null;
 
         public void addPoint(XYPair newPair)
         {
@@ -66,12 +66,12 @@ namespace GaussianRegression.Core
             lastPredict = null;
         }
 
-        public Dictionary<Vector<double>, NormalDistribution> predict()
+        public Dictionary<LabeledVector, NormalDistribution> predict()
         {
             if (lastPredict == null)
             {
-                lastPredict = new Dictionary<Vector<double>, NormalDistribution>();
-                list_x.ForEach(x => lastPredict.Add(x, covMatrix.getPosterior(x)));
+                lastPredict = new Dictionary<LabeledVector, NormalDistribution>();
+                list_x.ForEach(x => lastPredict.Add(x, covMatrix.getPosterior(x.x)));
             }
             return lastPredict;
         }

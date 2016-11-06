@@ -8,6 +8,7 @@ using MathNet.Numerics.Distributions;
 
 namespace GaussianRegression.Core
 {
+    //TODO: Hide this layer among GP
     public class CovFunction
     {
         public static CovFunction SquaredExponential(LengthScale L, SigmaF SF)

@@ -62,8 +62,8 @@ namespace GaussianRegression.Core
                 {
                     currentGradient[kv.Key] = differentiateLogMarginal(kv.Key);
                 }
-                Utility.Log("***************************************************************");
-                Utility.Log("Iter: " + iterCounter + " " + string.Join(", ", currentGradient.Select(kv => kv.Value).ToArray()));
+                GPUtility.Log("***************************************************************");
+                GPUtility.Log("Iter: " + iterCounter + " " + string.Join(", ", currentGradient.Select(kv => kv.Value).ToArray()));
 
                 if (currentGradient.All(kv => Math.Abs(kv.Value) < CONVERGENCE_THRESHOLD))
                 {
@@ -92,7 +92,7 @@ namespace GaussianRegression.Core
                     typeAndHyper[key] = Hyperparam.createInstance(key, v);
                 }
 
-                Utility.Log("Iter: " + iterCounter + " " + string.Join(", ", cf.param.Select(kv => kv.Value.value).ToArray()));
+                GPUtility.Log("Iter: " + iterCounter + " " + string.Join(", ", cf.param.Select(kv => kv.Value.value).ToArray()));
                 //Update CovMatrix
                 covMatrix.recalculate();
                 reboot();

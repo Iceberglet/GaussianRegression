@@ -8,7 +8,7 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace GaussianRegression.Core
 {
-    class CovMatrix
+    internal class CovMatrix
     {
         public readonly CovFunction cf;
         public XYPair[] xyPairs
@@ -106,6 +106,12 @@ namespace GaussianRegression.Core
 
         public void addX(XYPair xy)
         {
+            if (xyPairs.Contains(xy))
+            {
+                GPUtility.Log("You are adding an existing point to samples");
+                return;
+            }
+
             addX(new XYPair[] { xy }.ToList());
         }
 
@@ -126,12 +132,12 @@ namespace GaussianRegression.Core
             double mu, sd;
             Vector<double> usable_x_0 = x_0;
 
-            /*
+            
             if (sampled.Contains(x_0))
             {
                 //TRICK: Perturb it a tiny little bit so that we don't get NAN...
-                usable_x_0 = Utility.Perturb(x_0, delta);
-            }*/
+                usable_x_0 = GPUtility.Perturb(x_0, delta);
+            }
 
             double[,] k_1 = new double[1, xyPairs.Length];      //The CovMatrix between this point and known points
             double[,] k_0 = new double[1, 1];                   //The singleton matrix for this point
@@ -151,9 +157,6 @@ namespace GaussianRegression.Core
 
             mu = K_1_multiply_K_inverse.Multiply(Y).ToArray()[0, 0];
 
-            double k0 = K_0.ToArray()[0, 0];
-            double k0_right = K_1_multiply_K_inverse.Multiply(K_1.Transpose()).ToArray()[0, 0];
-
             sd = K_0.Subtract(K_1_multiply_K_inverse.Multiply(K_1.Transpose())).ToArray()[0, 0];
 
             if (double.IsNaN(mu) || double.IsInfinity(mu))
@@ -164,11 +167,11 @@ namespace GaussianRegression.Core
                 throw new Exception("Unlikely Results!");
             }
 
+            sd = Math.Sqrt(sd);
+
             if (double.IsNaN(sd) || double.IsInfinity(sd))
                 throw new Exception("Unlikely Results!");
 
-            sd = Math.Sqrt(sd);
-            
             return new NormalDistribution(mu, sd);
         }
         
