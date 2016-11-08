@@ -74,7 +74,7 @@ namespace GaussianRegression.Core
                     if (i < originalSize && j < originalSize)
                         covValues[i, j] = currentMatrix[i, j];
                     else
-                        covValues[i, j] = cf.eval(xyPairs[i].x, xyPairs[j].x);
+                        covValues[i, j] = cf.f(xyPairs[i].x, xyPairs[j].x);
                 }
             }
             K_base = Matrix<double>.Build.DenseOfArray(covValues);
@@ -106,10 +106,10 @@ namespace GaussianRegression.Core
 
             for (int i = 0; i < xyPairs.Length; ++i)
             {
-                k_1[0, i] = cf.eval(usable_x_0, xyPairs[i].x);
+                k_1[0, i] = cf.f(usable_x_0, xyPairs[i].x);
                 y[i, 0] = xyPairs[i].y;
             }
-            k_0[0, 0] = cf.eval(usable_x_0, usable_x_0);
+            k_0[0, 0] = cf.f(usable_x_0, usable_x_0);
 
             Matrix<double> K_1 = Matrix<double>.Build.DenseOfArray(k_1);    //horizontal matrix
             Matrix<double> K_0 = Matrix<double>.Build.DenseOfArray(k_0);    //singleton

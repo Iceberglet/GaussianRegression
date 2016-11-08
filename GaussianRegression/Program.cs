@@ -18,7 +18,7 @@ namespace GaussianRegression
             Test.testMotor();
 
             Console.WriteLine("End of Execution.");
-            //Console.ReadLine();
+            Console.ReadLine();
         }
     }
 }

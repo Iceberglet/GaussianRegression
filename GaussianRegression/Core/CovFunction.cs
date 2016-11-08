@@ -8,80 +8,126 @@ using MathNet.Numerics.Distributions;
 
 namespace GaussianRegression.Core
 {
-    class CovFunction
+    public class CovFunction
     {
-        public enum Type
+        public static CovFunction SquaredExponential(LengthScale L, SigmaF SF)
         {
-            GaussianNoise,
-            SquaredExponential,
-            Matern,
-            Composite
+            var l = L.value;
+            var sf = SF.value;
+            double l2 = 2 * l * l;
+            double sigma2 = sf * sf;
+            Func<Vector<double>, Vector<double>, double> newF = (a, b) =>
+            {
+                double d = (a - b).L2Norm();
+                return sigma2 * Math.Exp(-d * d / l2);
+            };
+
+            Func<Type, Func<Vector<double>, Vector<double>, double>> newDiff = (t) =>
+            {
+                if (t == typeof(LengthScale))
+                {
+                    return (a, b) =>
+                    {
+                        double d = (a - b).L2Norm();
+                        return 2 * sf * Math.Exp(-d * d / l / l);
+                    };
+                }
+                if (t == typeof(SigmaF))
+                {
+                    return (a, b) =>
+                    {
+                        double d2 = Math.Pow((a - b).L2Norm(), 2);
+                        return 2 * d2 / Math.Pow(l, 3) * sf * sf * Math.Exp(-d2 / l / l);
+                    };
+                }
+                else return (a, b) => 0;
+            };
+
+            CovFunction res = new CovFunction(newF, newDiff);
+            res.addParams(L, SF);
+            return res;
         }
 
-        //Diagonal Constant Jitter Term
-        public static CovFunction GaussianNoise(double sigma)
+        public static CovFunction GaussianNoise(SigmaJ SJ)
         {
-            Random rand = new Random();
-
-            Func<Vector<double>, Vector<double>, double> f = (a, b) =>
+            var sj = SJ.value;
+            Func<Vector<double>, Vector<double>, double> newF = (a, b) =>
             {
                 if (a.SequenceEqual(b))
-                    return sigma * sigma; // * Normal.InvCDF(0, 1, rand.NextDouble());
+                {
+                    return sj * sj;
+                }
                 else return 0;
             };
 
-            return new CovFunction(f, Type.GaussianNoise);
-        }
-        
-        public static CovFunction SquaredExponential(double l, double sigmaF)
-        {
-            double l2 = 2 * l * l;
-            double sigma2 = sigmaF * sigmaF;
-            Func<Vector<double>, Vector<double>, double> f = (a, b) =>
+            Func<Type, Func<Vector<double>, Vector<double>, double>> newDiff = (t) =>
             {
-                double d = (a - b).L2Norm();
-                return sigma2 * Math.Exp(- d * d / l2);
+                if (t == typeof(SigmaJ))
+                {
+                    return (a, b) =>
+                    {
+                        if (a.SequenceEqual(b))
+                        {
+                            return 2 * sj;
+                        }
+                        else return 0;
+                    };
+                }
+                else return (a, b) => 0;
             };
 
-            return new CovFunction(f, Type.SquaredExponential);
-        }
-        
-        public static CovFunction operator +(CovFunction f1, CovFunction f2)
-        {
-            Func<Vector<double>, Vector<double>, double> f = (a, b) =>
-            {
-                return f1.eval(a, b) + f2.eval(a, b);
-            };
-            return new CovFunction(f, Type.Composite);
+            CovFunction res = new CovFunction(newF, newDiff);
+            res.addParams(SJ);
+            return res;
         }
 
-        public static CovFunction Matern(double l)
+        public static CovFunction Matern(LengthScale L, Dof D)
         {
-            throw new Exception("Not Implemented");
+            throw new NotImplementedException();
         }
-        
+
         // *********** Actual Implementation *************
 
         //public readonly List<Func<Vector<double>, Vector<double>, double>> f_derivatives;
 
-        public readonly Type type;
-        public readonly Func<Vector<double>, Vector<double>, double> covarFunction;
-        //private int dimension;
+        internal readonly Dictionary<Type, Hyperparam> param;
+        internal readonly Func<Vector<double>, Vector<double>, double> f;
+        internal readonly Func<Type, Func<Vector<double>, Vector<double>, double>> differential;
 
-        //The burden is on user to ensure f does take two vector of N length
-        //Only used by the static creators
-        private CovFunction(Func<Vector<double>, Vector<double>, double> f, Type type = Type.Composite)//, int dimension)
+        private void addParams(params Hyperparam[] param)
         {
-            this.covarFunction = f;
-            this.type = type;
-            //this.dimension = dimension;
+            foreach(var i in param)
+            {
+                this.param[i.type] =  i;
+            }
+        }
+        
+        private CovFunction(Func<Vector<double>, Vector<double>, double> f,
+            Func<Type, Func<Vector<double>, Vector<double>, double>> diff
+            )
+        {
+            this.param = new Dictionary<Type, Hyperparam>();
+            this.f = f;
+            this.differential = diff;
         }
 
-        public double eval(Vector<double> a, Vector<double> b)
+        //Combine two CovFunctions
+        public static CovFunction operator +(CovFunction f1, CovFunction f2)
         {
-            //if (a.Count != dimension || b.Count != dimension)
-            //    throw new Exception("Invalid input for covariance matrix, dimension mismatch");
-            return covarFunction(a, b);
+            Func<Vector<double>, Vector<double>, double> newF = (a, b) =>
+            {
+                return f1.f(a, b) + f2.f(a, b);
+            };
+            Func<Type, Func<Vector<double>, Vector<double>, double>> newDiff = (t) => (a, b) =>
+            {
+                return f1.differential(t)(a, b) + f2.differential(t)(a, b);
+            };
+            var res = new CovFunction(newF, newDiff);
+            foreach (var hyper in f1.param)
+                res.addParams(hyper.Value);
+            foreach (var hyper in f2.param)
+                res.addParams(hyper.Value);
+            return res;
         }
     }
 }

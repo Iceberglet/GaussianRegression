@@ -127,10 +127,10 @@ namespace GaussianRegression.Core
             lastPredict = new Dictionary<Vector<double>, NormalDistribution>();
             list_x.ForEach(x => lastPredict.Add(x, covMatrix.getPosterior(x)));
         }
-
-        //TODO
+        
         public void addPoint(XYPair newPair)
         {
+            covMatrix.addX(newPair);
             lastPredict = null;
         }
 

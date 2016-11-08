@@ -28,10 +28,10 @@ namespace GaussianRegression
                     values.Add(new XYPair(x, xx * xx + (rand.NextDouble() - 1) * 500));
             }
 
-            CovFunction cf = CovFunction.SquaredExponential(8, 50) + CovFunction.GaussianNoise(30);
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(8), new SigmaF(50)) + CovFunction.GaussianNoise(new SigmaJ(50));
             
             GP myGP = new GP(sampledValues: values, list_x: list_x.ToList(), cov_f: cf,
-                heteroscedastic: true,
+                heteroscedastic: false,
                 lengthScale: 60, sigma_f: 20);
             var res = myGP.predict();
 
@@ -51,7 +51,7 @@ namespace GaussianRegression
                 list_x.Add(Utility.V(x));
             }
 
-            CovFunction cf = CovFunction.SquaredExponential(8, 20) + CovFunction.GaussianNoise(1);
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(8), new SigmaF(20)) + CovFunction.GaussianNoise(new SigmaJ(1));
 
             GP myGP = new GP(sampledValues: values, list_x: list_x.ToList(), cov_f: cf,
                 heteroscedastic: true,
@@ -87,7 +87,7 @@ namespace GaussianRegression
                 if (rand.NextDouble() < 0.15)
                     sampled.Add(newPair);
             }
-            CovFunction cf = CovFunction.SquaredExponential(40, 10) + CovFunction.GaussianNoise(10);
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(40), new SigmaF(10)) + CovFunction.GaussianNoise(new SigmaJ(10));
             
             GP myGP = new GP(sampledValues: sampled, list_x: list_x.ToList(), cov_f: cf,
                 heteroscedastic: true,
@@ -109,19 +109,21 @@ namespace GaussianRegression
 
         public static void testCovFunc()
         {
-            CovFunction cf2 = CovFunction.SquaredExponential(10, 2);
+            CovFunction cf2 = CovFunction.SquaredExponential(new LengthScale(8), new SigmaF(50)) + CovFunction.GaussianNoise(new SigmaJ(1));
             //CovFunction cf2 = CovFunction.GaussianNoise(10);
 
             Vector<double> a = Vector<double>.Build.Dense(new double[] { 1, 3, 5, 7 });
             Vector<double> a_prime = Vector<double>.Build.Dense(new double[] { 1, 3, 5, 7 });
             Vector<double> b = Vector<double>.Build.Dense(new double[] { 2, 4, 6, 8 });
-            Vector<double> c = Vector<double>.Build.Dense(new double[] { 2, 4, 6, 8, 10 });
+            //Vector<double> c = Vector<double>.Build.Dense(new double[] { 2, 4, 6, 8, 10 });
 
-            Console.WriteLine("a and a_prime gives: " + cf2.eval(a, a_prime));
-            Console.WriteLine("a and b gives: " + cf2.eval(a, b));
-            Console.WriteLine("a and c gives: " + cf2.eval(a, c));
-            
-
+            Console.WriteLine("a and a_prime gives: " + cf2.f(a, a_prime));
+            Console.WriteLine("a and b gives: " + cf2.f(a, b));
+            Console.WriteLine("a and b differential w.r.t LengthScale: " + cf2.differential(typeof(LengthScale))(a, b));
+            Console.WriteLine("a and b differential w.r.t SigmaF: " + cf2.differential(typeof(SigmaF))(a, b));
+            Console.WriteLine("a and b differential w.r.t SigmaJ: " + cf2.differential(typeof(SigmaJ))(a, b));
+            Console.WriteLine("a and a_prime differential w.r.t SigmaJ: " + cf2.differential(typeof(SigmaJ))(a, a_prime));
+            //Console.WriteLine("a and c gives: " + cf2.f(a, c));
         }
     }
 }
