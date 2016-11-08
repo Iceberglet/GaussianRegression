@@ -52,6 +52,7 @@
     <Compile Include="Core\CovMatrixHetero.cs" />
     <Compile Include="Core\GP.cs" />
     <Compile Include="Core\Hyperparam.cs" />
+    <Compile Include="Core\ModelOptimizer.cs" />
     <Compile Include="Test.cs" />
     <Compile Include="Utility\Utility.cs" />
     <Compile Include="Utility\NormalDistribution.cs" />

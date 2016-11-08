@@ -37,6 +37,30 @@ namespace GaussianRegression.Core
         protected Matrix<double> K_inverse;
 
         protected double delta;   //For perturbation on sampled points
+
+        //****** Getters ******
+        internal Matrix<double> getK()
+        {
+            return Matrix<double>.Build.DenseOfArray(K.ToArray());
+        }
+        internal Matrix<double> getY()
+        {
+            double[,] y = new double[xyPairs.Length, 1];
+
+            for (int i = 0; i < xyPairs.Length; ++i)
+            {
+                y[i, 0] = xyPairs[i].y;
+            }
+
+            return Matrix<double>.Build.DenseOfArray(y);
+        }
+        internal List<Vector<double>> getX()
+        {
+            return xyPairs.Select(xy => xy.x).ToList();
+        }
+
+
+
         public CovMatrix(CovFunction cf, List<XYPair> list_xy = null, double delta = 0.0005)
         {
             this.cf = cf;
@@ -101,18 +125,16 @@ namespace GaussianRegression.Core
 
             double[,] k_1 = new double[1, xyPairs.Length];      //The CovMatrix between this point and known points
             double[,] k_0 = new double[1, 1];                   //The singleton matrix for this point
-            double[,] y = new double[xyPairs.Length, 1];
 
             for (int i = 0; i < xyPairs.Length; ++i)
             {
                 k_1[0, i] = cf.f(usable_x_0, xyPairs[i].x);
-                y[i, 0] = xyPairs[i].y;
             }
             k_0[0, 0] = cf.f(usable_x_0, usable_x_0);
 
             Matrix<double> K_1 = Matrix<double>.Build.DenseOfArray(k_1);    //horizontal matrix
             Matrix<double> K_0 = Matrix<double>.Build.DenseOfArray(k_0);    //singleton
-            Matrix<double> Y = Matrix<double>.Build.DenseOfArray(y);    //a vertical 1-n matrix
+            Matrix<double> Y = getY();    //a vertical 1-n matrix
 
             //intermediate result
             Matrix<double> K_1_multiply_K_inverse = K_1.Multiply(K_inverse);

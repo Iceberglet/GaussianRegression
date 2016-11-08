@@ -34,7 +34,7 @@ namespace GaussianRegression.Core
 
         private static readonly int MAX_HETEROSCEDASTIC_ITERATION = 100;
         private static readonly int HETEROSCEDASTIC_POINT_SAMPLE_SIZE = 20;
-        //private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.1;
+        private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.03;
 
         //Using Most Likely Heteroscedastic Approach
         //http://www.machinelearning.org/proceedings/icml2007/papers/326.pdf
@@ -78,13 +78,13 @@ namespace GaussianRegression.Core
 
                 var nextNoiseSum = noise_z.Sum(n => n.y * n.y);
                 var currentError = Math.Abs(previousNoiseSum - nextNoiseSum) / nextNoiseSum;
-                if (currentError < 0.03)
+                if (currentError < HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE)
                 {
                     converged = true;
                 }
                 else
                 {
-                    Utility.Log("Current Error" + currentError);
+                    Utility.Log("Current Error " + currentError);
                     previousNoiseSum = nextNoiseSum;
                 }
 
