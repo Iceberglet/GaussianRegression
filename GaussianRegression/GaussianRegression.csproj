@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Core\CovFunction.cs" />
     <Compile Include="Core\CovMatrix.cs" />
+    <Compile Include="Core\CovMatrixHetero.cs" />
     <Compile Include="Core\GP.cs" />
     <Compile Include="Core\Hyperparam.cs" />
     <Compile Include="Test.cs" />

@@ -12,7 +12,6 @@ namespace GaussianRegression.Core
 {
     class GP
     {
-        private static Random rand = new Random();
         private bool heteroscedastic;
         private bool estimateHyperPara;
         private double lengthScale;
@@ -41,26 +40,24 @@ namespace GaussianRegression.Core
             this.sigma_jitter = sigma_jitter;
 
             this.cov_f = cov_f;
-            this.covMatrix = new CovMatrix(cov_f, sampledValues, delta);
+            if(heteroscedastic)
+                this.covMatrix = new CovMatrixHetero(cov_f, sampledValues, sigma_f, delta);
+            else this.covMatrix = new CovMatrix(cov_f, sampledValues, delta);
         }
 
         //NOTE must be set null after every time GP is modified
         private Dictionary<Vector<double>, NormalDistribution> lastPredict = null;
-        private static readonly int MAX_HETEROSCEDASTIC_ITERATION = 100;
-        private static readonly int HETEROSCEDASTIC_POINT_SAMPLE_SIZE = 20;
         //private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.1;
 
-
-        //Using Most Likely Heteroscedastic Approach
-        //http://www.machinelearning.org/proceedings/icml2007/papers/326.pdf
+            /*
         private void updateInputDependentVariance()
         {
             covMatrix.updateNoise(list_x.Select(x => new XYPair(x, sigma_f)).ToList());
             int counter = 0;
             bool converged = false;
             Dictionary<Vector<double>, NormalDistribution> resulting_z = new Dictionary<Vector<double>, NormalDistribution>();
-            
-            while (counter < MAX_HETEROSCEDASTIC_ITERATION || converged )
+
+            while (counter < MAX_HETEROSCEDASTIC_ITERATION || converged)
             {
                 Utility.Log("Heteroscedastic Iter: " + counter);
 
@@ -73,47 +70,35 @@ namespace GaussianRegression.Core
                     Vector<double> xx = x.x;
                     NormalDistribution nd = covMatrix.getPosterior(x.x);
                     dictForSampled.Add(x.x, nd);
-                    });
+                });
                 Utility.Log("Done New prediction.");
 
                 foreach (XYPair xyPair in knownPoints)
                 {
                     NormalDistribution nd = dictForSampled[xyPair.x];  // current estimate
                     double varEstimate = 0;
-                    
-                    for(int i = 0; i < HETEROSCEDASTIC_POINT_SAMPLE_SIZE; i++)
+
+                    for (int i = 0; i < HETEROSCEDASTIC_POINT_SAMPLE_SIZE; i++)
                     {
                         double sample = Normal.InvCDF(nd.mu, nd.sd, rand.NextDouble());
                         varEstimate += Math.Pow((xyPair.y - sample), 2);
                     }
                     varEstimate *= 0.5 / HETEROSCEDASTIC_POINT_SAMPLE_SIZE;
                     varEstimate = Math.Sqrt(varEstimate);   //Back to SD
-                    
+
                     //the new GP is performed on the logarithm of SD - so the SD is always positive
                     varEstimate = Math.Log(varEstimate);
                     noise_z.Add(new XYPair(xyPair.x, varEstimate));
                 }
-                
+
                 //2. Construct another Gaussian Process, GP_1 to evaluate them
-                GP gp_for_noise = new GP(sampledValues: noise_z, list_x: this.list_x, cov_f:cov_f,
-                    lengthScale : lengthScale, sigma_f : sigma_f, sigma_jitter : sigma_jitter);
+                GP gp_for_noise = new GP(sampledValues: noise_z, list_x: this.list_x, cov_f: cov_f,
+                    lengthScale: lengthScale, sigma_f: sigma_f, sigma_jitter: sigma_jitter);
 
                 Utility.Log("Performing Variance Regression");
                 resulting_z = gp_for_noise.predict();    //Discard the variance info
                 
-                /*//*******************************************For Debugging
-                FileService fs = new FileService("GP_On_Noise_" + counter + ".csv");
-                List<string> noiseRaw = new List<string>() { ", GP, Raw" };
-                foreach(var kv in resulting_z)
-                {
-                    //Find the z estimate against x
-                    XYPair raw = noise_z.Find(z => z.x.Equals(kv.Key));
-                    string y = raw==null? "" : raw.y.ToString();
-                    string s = kv.Key.toString() + "," + kv.Value.mu + "," + y;
-                    noiseRaw.Add(s);
-                }
-                fs.writeToFile(noiseRaw.ToArray());//*/
-                
+
                 Utility.Log("Updating Noise Term in CovMatrix");
                 covMatrix.updateNoise(resulting_z.Select(kv => new XYPair(kv.Key, Math.Exp(kv.Value.mu))).ToList());    //Notice the Exp
 
@@ -126,8 +111,8 @@ namespace GaussianRegression.Core
             }
             lastPredict = new Dictionary<Vector<double>, NormalDistribution>();
             list_x.ForEach(x => lastPredict.Add(x, covMatrix.getPosterior(x)));
-        }
-        
+        }*/
+
         public void addPoint(XYPair newPair)
         {
             covMatrix.addX(newPair);
@@ -138,15 +123,8 @@ namespace GaussianRegression.Core
         {
             if (lastPredict == null)
             {
-                if (heteroscedastic)
-                {
-                    updateInputDependentVariance();
-                    return lastPredict;
-                } else
-                {
-                    lastPredict = new Dictionary<Vector<double>, NormalDistribution>();
-                    list_x.ForEach(x => lastPredict.Add(x, covMatrix.getPosterior(x)));
-                }
+                lastPredict = new Dictionary<Vector<double>, NormalDistribution>();
+                list_x.ForEach(x => lastPredict.Add(x, covMatrix.getPosterior(x)));
             }
             return lastPredict;
         }

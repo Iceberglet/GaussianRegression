@@ -11,6 +11,17 @@ namespace GaussianRegression
     {
         private static Random rand = new Random();
 
+        //**************  Random Numbers ********************
+        public static double NextProba()
+        {
+            double res = 0;
+            while(res == 0)
+            {
+                res = rand.NextDouble();
+            }
+            return res;
+        }
+
         //**************  Extension Methods  ************************
         public static string toString<T>(this IList<T> list, string separator)
         {

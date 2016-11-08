@@ -15,10 +15,9 @@ namespace GaussianRegression.Core
         {
             get; private set;
         }
-        private Dictionary<Vector<double>, double> noises;
 
-        private Matrix<double> K;
-        private Matrix<double> K_base       //A Square Matrix (without input dependent diagonal noise term)
+        protected Matrix<double> K;
+        protected Matrix<double> K_base       //A Square Matrix (without input dependent diagonal noise term)
         {
             get { return K_B; }
             set {
@@ -31,13 +30,13 @@ namespace GaussianRegression.Core
                 K_inverse = K.Inverse();    //Sets K_inverse
             }   //also sets the inverse
         }
-        private Matrix<double> K_B;
+        protected Matrix<double> K_B;
 
         //ComputationalHelpers
-        private Matrix<double> K_diag;      //Input dependent variance!
-        private Matrix<double> K_inverse;
+        protected Matrix<double> K_diag;      //Input dependent variance!
+        protected Matrix<double> K_inverse;
 
-        private double delta;   //For perturbation on sampled points
+        protected double delta;   //For perturbation on sampled points
         public CovMatrix(CovFunction cf, List<XYPair> list_xy = null, double delta = 0.0005)
         {
             this.cf = cf;
@@ -50,7 +49,7 @@ namespace GaussianRegression.Core
         }
 
         //Expand the matrix
-        private void addX(List<XYPair> pairs)
+        protected virtual void addX(List<XYPair> pairs)
         {
             if (pairs == null || pairs.Count == 0)
                 throw new Exception("You are adding 0 new elements to the matrix");
@@ -85,7 +84,7 @@ namespace GaussianRegression.Core
             addX(new XYPair[] { xy }.ToList());
         }
 
-        public NormalDistribution getPosterior(Vector<double> x_0)
+        public virtual NormalDistribution getPosterior(Vector<double> x_0)
         {
             if (xyPairs == null || xyPairs.Length == 0)
                 throw new Exception("Cov Matrix is Empty!");
@@ -138,36 +137,8 @@ namespace GaussianRegression.Core
 
             sd = Math.Sqrt(sd);
             
-            if (noises != null && noises.ContainsKey(x_0))
-                sd += noises[x_0];
-
             return new NormalDistribution(mu, sd);
         }
         
-        //Updates the K_diag and predicted noise term for each point
-        public void updateNoise(List<XYPair> noise_z)
-        {
-            if (noises == null)
-                noises = new Dictionary<Vector<double>, double>();
-
-            Vector<double>[] xInSample = xyPairs.Select(pair => pair.x).ToArray();
-
-            double[,] k_diag = K_diag == null ? new double[K_base.RowCount, K_base.ColumnCount] : K_diag.ToArray();
-
-            foreach(XYPair noise in noise_z)
-            {
-                if (!noises.ContainsKey(noise.x))
-                    noises.Add(noise.x, noise.y);
-                else noises[noise.x] = noise.y;
-                //Update the diagonal matrix
-                int idx = Array.IndexOf(xInSample, noise.x);
-                if (idx > -1)
-                    k_diag[idx, idx] = noise.y;
-            }
-            K_diag = Matrix<double>.Build.DenseOfArray(k_diag);
-            K = K_base.Add(K_diag);
-            //double[] sum = K.Diagonal().ToArray();
-            return;
-        }
     }
 }
