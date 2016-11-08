@@ -41,10 +41,11 @@ namespace GaussianRegression.Core
         private void performNoiseAnalysis()
         {
             int counter = 0;
+            double previousNoiseSum = 0;
             bool converged = false;
             Dictionary<Vector<double>, NormalDistribution> resulting_z = new Dictionary<Vector<double>, NormalDistribution>();
 
-            while (counter < MAX_HETEROSCEDASTIC_ITERATION || converged)
+            while (counter < MAX_HETEROSCEDASTIC_ITERATION && !converged)
             {
                 Utility.Log("Heteroscedastic Iter: " + counter);
 
@@ -56,7 +57,6 @@ namespace GaussianRegression.Core
                 knownPoints.ForEach(x => {
                     dictForSampled.Add(x.x, this.getPosterior(x.x));
                 });
-                Utility.Log("Done New prediction.");
 
                 foreach (XYPair xyPair in knownPoints)
                 {
@@ -75,14 +75,23 @@ namespace GaussianRegression.Core
                     varEstimate = Math.Log(varEstimate);
                     noise_z.Add(new XYPair(xyPair.x, varEstimate));
                 }
-                Utility.Log("Updating Noise Result");
+
+                var nextNoiseSum = noise_z.Sum(n => n.y * n.y);
+                var currentError = Math.Abs(previousNoiseSum - nextNoiseSum) / nextNoiseSum;
+                if (currentError < 0.03)
+                {
+                    converged = true;
+                }
+                else
+                {
+                    Utility.Log("Current Error" + currentError);
+                    previousNoiseSum = nextNoiseSum;
+                }
 
                 //2. Construct another Gaussian CovMatrix to evaluate noise
                 matrixForNoise = new CovMatrix(cf, noise_z, delta);
                 //3. Update the diagonal matrices for this
                 this.updateNoise(noise_z);
-                
-                Utility.Log("Updating Noise Term in CovMatrix");
                 
                 counter++;
             }
