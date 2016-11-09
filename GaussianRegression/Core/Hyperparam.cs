@@ -12,6 +12,8 @@ namespace GaussianRegression.Core
         public double value { get; private set; }
         protected Hyperparam(double v, Type t)
         {
+            if (v <= 0)
+                throw new Exception("Hyper parameter cannot be negative!");
             type = t;
             value = v;
         }

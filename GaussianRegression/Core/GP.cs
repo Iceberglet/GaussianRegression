@@ -50,7 +50,10 @@ namespace GaussianRegression.Core
                 ModelOptimizer mo = new ModelOptimizer(covMatrix, cov_f);
                 mo.optimize();
             }
-            
+
+            if (heteroscedastic)
+                ((CovMatrixHetero)covMatrix).performNoiseAnalysis();
+
             Utility.Log("Final Hypers: " + string.Join(", ", cov_f.param.Select(kv => kv.Value.value).ToArray()));
         }
 

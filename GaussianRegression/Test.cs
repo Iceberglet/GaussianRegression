@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.Distributions;
+using MathNet.Numerics.Statistics;
 using GaussianRegression.Core;
 
 namespace GaussianRegression
@@ -51,10 +52,13 @@ namespace GaussianRegression
                 list_x.Add(Utility.V(x));
             }
 
-            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(2), new SigmaF(2)) + CovFunction.GaussianNoise(new SigmaJ(2));
+            var SF = Math.Sqrt(Statistics.Variance(values.Select(xy => xy.y))) / 2;
+            //Utility.Log("Variance determined as: " + SF);
+
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(8), new SigmaF(20)) + CovFunction.GaussianNoise(new SigmaJ(1));
 
             GP myGP = new GP(sampledValues: values, list_x: list_x.ToList(), cov_f: cf,
-                heteroscedastic: true, estimateHyperPara: true,
+                heteroscedastic: true, estimateHyperPara: false,
                 lengthScale: 60, sigma_f: 20);
             var res = myGP.predict();
 

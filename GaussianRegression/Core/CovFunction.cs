@@ -15,30 +15,33 @@ namespace GaussianRegression.Core
             CovFunction res = null;
             Func<Vector<double>, Vector<double>, double> newF = (a, b) =>
             {
-                var l2 = res == null ? 2 * L.value * L.value : res.param[typeof(LengthScale)].value;
-                var sigma2 = res == null ? SF.value * SF.value : res.param[typeof(SigmaF)].value;
+                var l = res == null ? L.value : res.param[typeof(LengthScale)].value;
+                var sigma = res == null ? SF.value : res.param[typeof(SigmaF)].value;
+                var l2 = 2 * l * l;
+                var sigma2 = sigma * sigma;
                 double d = (a - b).L2Norm();
                 return sigma2 * Math.Exp(-d * d / l2);
             };
-
+            
             Func<Type, Func<Vector<double>, Vector<double>, double>> newDiff = (t) =>
             {
                 var l = res == null ? L.value : res.param[typeof(LengthScale)].value;
                 var sf = res == null ? SF.value : res.param[typeof(SigmaF)].value;
+                var l2 = 2 * l * l;
                 if (t == typeof(LengthScale))
                 {
                     return (a, b) =>
                     {
-                        double d = (a - b).L2Norm();
-                        return 2 * sf * Math.Exp(-d * d / l / l);
+                        double d2 = Math.Pow((a - b).L2Norm(), 2);
+                        return d2 / Math.Pow(l, 3) * sf * sf * Math.Exp(-d2 / l2);
                     };
                 }
                 if (t == typeof(SigmaF))
                 {
                     return (a, b) =>
                     {
-                        double d2 = Math.Pow((a - b).L2Norm(), 2);
-                        return 2 * d2 / Math.Pow(l, 3) * sf * sf * Math.Exp(-d2 / l / l);
+                        double d = (a - b).L2Norm();
+                        return 2 * sf * Math.Exp(-d * d / l2);
                     };
                 }
                 else return (a, b) => 0;
@@ -65,6 +68,8 @@ namespace GaussianRegression.Core
             Func<Type, Func<Vector<double>, Vector<double>, double>> newDiff = (t) =>
             {
                 var sj = res == null ? SJ.value : res.param[typeof(SigmaJ)].value;
+
+
                 if (t == typeof(SigmaJ))
                 {
                     return (a, b) =>
@@ -123,6 +128,11 @@ namespace GaussianRegression.Core
             };
             Func<Type, Func<Vector<double>, Vector<double>, double>> newDiff = (t) => (a, b) =>
             {
+                /*
+                var left = f1.differential(t)(a, b);
+                var right = f2.differential(t)(a, b);
+                if (left * right != 0)
+                    throw new Exception("Gotcha!");*/
                 return f1.differential(t)(a, b) + f2.differential(t)(a, b);
             };
             var res = new CovFunction(newF, newDiff);

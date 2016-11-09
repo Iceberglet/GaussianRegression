@@ -126,11 +126,12 @@ namespace GaussianRegression.Core
             double mu, sd;
             Vector<double> usable_x_0 = x_0;
 
+            /*
             if (sampled.Contains(x_0))
             {
                 //TRICK: Perturb it a tiny little bit so that we don't get NAN...
                 usable_x_0 = Utility.Perturb(x_0, delta);
-            }
+            }*/
 
             double[,] k_1 = new double[1, xyPairs.Length];      //The CovMatrix between this point and known points
             double[,] k_0 = new double[1, 1];                   //The singleton matrix for this point

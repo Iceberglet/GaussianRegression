@@ -34,53 +34,48 @@ namespace GaussianRegression.Core
             this.N = K.RowCount;
         }
 
-        private static readonly double INITIALSTEP = 1;
+        private static readonly double INITIALSTEP = 0.1;
         private static readonly double STEP_UP_RATIO = 1.15;
-        private static readonly double STEP_DOWN_RATIO = 0.85;
+        private static readonly double STEP_DOWN_RATIO = 0.75;
         private static readonly double CONVERGENCE_THRESHOLD = 0.001;
-        private static readonly double MAX_ITERATION = 100;
+        private static readonly double MAX_ITERATION = 200;
 
         public void optimize()
         {
             var typeAndHyper = cf.param;
             var previousGradient = new Dictionary<Type, double>();
-            var currentGradient = new Dictionary<Type, double>();
             var typeAndStep = new Dictionary<Type, double>();
             var iterCounter = 0;
-            var elementConverged = new Dictionary<Type, bool>();
             var converged = false;
             //Initialize Step Sizes
             foreach (var kv in typeAndHyper)
             {
-                elementConverged.Add(kv.Key, false);
                 typeAndStep.Add(kv.Key, INITIALSTEP);
             }
 
             while (iterCounter < MAX_ITERATION && !converged)
             {
+                var currentGradient = new Dictionary<Type, double>();
                 iterCounter++;
                 //Compute the gradient
                 foreach (var kv in typeAndHyper)
                 {
                     currentGradient[kv.Key] = differentiateLogMarginal(kv.Key);
                 }
+                Utility.Log("***************************************************************");
+                Utility.Log("Iter: " + iterCounter + " " + string.Join(", ", currentGradient.Select(kv => kv.Value).ToArray()));
 
-                //Utility.Log("Iter: " + iterCounter + " " + string.Join(", ", currentGradient.Select(kv => kv.Value).ToArray()));
-                
+                if (currentGradient.All(kv => Math.Abs(kv.Value) < CONVERGENCE_THRESHOLD))
+                {
+                    converged = true;
+                }
+
                 //Otherwise, compute the step sizes
                 if (previousGradient.Count != 0)
                 {
                     foreach (var k in typeAndStep.Keys.ToList())
                     {
-                        if (Math.Abs(currentGradient[k]) < CONVERGENCE_THRESHOLD)
-                        {
-                            var current = currentGradient[k];
-                            typeAndStep[k] = 0;
-                            elementConverged[k] = true;
-                            if (elementConverged.All(kv => kv.Value))
-                                converged = true;
-                        }
-                        else if (Math.Sign(currentGradient[k]) == Math.Sign(previousGradient[k]))
+                        if (Math.Sign(currentGradient[k]) == Math.Sign(previousGradient[k]))
                             typeAndStep[k] = typeAndStep[k] * STEP_UP_RATIO;
                         else
                             typeAndStep[k] = typeAndStep[k] * STEP_DOWN_RATIO;
@@ -92,7 +87,9 @@ namespace GaussianRegression.Core
                 foreach (var key in typeAndHyper.Keys.ToList())
                 {
                     Hyperparam par = typeAndHyper[key];
-                    typeAndHyper[key] = Hyperparam.createInstance(key, par.value - Math.Sign(currentGradient[key])*typeAndStep[key]);
+                    //Temp Fix
+                    var v = Math.Max(0.000000001, par.value + Math.Sign(currentGradient[key]) * typeAndStep[key]);
+                    typeAndHyper[key] = Hyperparam.createInstance(key, v);
                 }
 
                 Utility.Log("Iter: " + iterCounter + " " + string.Join(", ", cf.param.Select(kv => kv.Value.value).ToArray()));
@@ -123,7 +120,7 @@ namespace GaussianRegression.Core
             var k_inverse = K.Inverse();
             Matrix<double> K_partial = Matrix<double>.Build.DenseOfArray(k_partial);
             Matrix<double> alpha = k_inverse.Multiply(Y);
-            Matrix<double> rightResult = alpha.Multiply(alpha.Transpose()).Subtract(k_inverse).Multiply(K_partial);
+            Matrix<double> rightResult = (alpha.Multiply(alpha.Transpose()).Subtract(k_inverse)).Multiply(K_partial);
             var trace = rightResult.Trace();
             if (double.IsNaN(trace))
                 throw new Exception("Invalid Result! ");

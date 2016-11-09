@@ -38,7 +38,7 @@ namespace GaussianRegression.Core
 
         //Using Most Likely Heteroscedastic Approach
         //http://www.machinelearning.org/proceedings/icml2007/papers/326.pdf
-        private void performNoiseAnalysis()
+        public void performNoiseAnalysis()
         {
             int counter = 0;
             double previousNoiseSum = 0;
