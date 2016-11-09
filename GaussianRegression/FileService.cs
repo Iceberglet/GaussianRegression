@@ -69,7 +69,7 @@ namespace GaussianRegression
             {
                 double upper = kv.Value.mu + 1.96 * kv.Value.sd;
                 double lower = kv.Value.mu - 1.96 * kv.Value.sd;
-                string s = lower + "," + upper; // + "," + kv.Key.y;
+                string s = kv.Value.mu + "," + lower + "," + upper; // + "," + kv.Key.y;
                 xAndString.Add(kv.Key.x, s);
             }
 

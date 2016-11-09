@@ -131,7 +131,6 @@ namespace GaussianRegression.Core
             List<Vector<double>> sampled = xyPairs.Select(xy => xy.x).ToList();
             double mu, sd;
             Vector<double> usable_x_0 = x_0;
-
             
             if (sampled.Contains(x_0))
             {
@@ -167,10 +166,10 @@ namespace GaussianRegression.Core
                 throw new Exception("Unlikely Results!");
             }
 
-            sd = Math.Sqrt(sd);
-
-            if (double.IsNaN(sd) || double.IsInfinity(sd))
+            if (double.IsNaN(sd) || double.IsInfinity(sd) || sd < 0)
                 throw new Exception("Unlikely Results!");
+
+            sd = Math.Sqrt(sd);
 
             return new NormalDistribution(mu, sd);
         }

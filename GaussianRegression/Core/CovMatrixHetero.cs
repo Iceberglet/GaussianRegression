@@ -18,7 +18,7 @@ namespace GaussianRegression.Core
         public CovMatrixHetero(CovFunction cf, List<XYPair> list_xy = null, double sigma_f = 1, double delta = 0.0005) : base(cf, list_xy, delta)
         {
             var initialZeroNoise = list_xy.Select(xy => new XYPair(xy.x, sigma_f)).ToList();
-            var diag = Enumerable.Repeat(sigma_f, list_xy.Count).ToArray();
+            var diag = Enumerable.Repeat(0d, list_xy.Count).ToArray();
             matrixForNoise = new CovMatrix(cf, initialZeroNoise, delta);
             K_diag = Matrix<double>.Build.Diagonal(diag);
             K_base = K_base;
@@ -47,7 +47,7 @@ namespace GaussianRegression.Core
 
             while (counter < MAX_HETEROSCEDASTIC_ITERATION && !converged)
             {
-                //Utility.Log("Heteroscedastic Iter: " + counter);
+                GPUtility.Log("Heteroscedastic Iter: " + counter);
 
                 //1. Get Empirical Noise at all sampled points on GP_0
                 List<XYPair> noise_z = new List<XYPair>();  //Note: the y here refers to the noise term
@@ -65,7 +65,7 @@ namespace GaussianRegression.Core
 
                     for (int i = 0; i < HETEROSCEDASTIC_POINT_SAMPLE_SIZE; i++)
                     {
-                        double sample = Normal.InvCDF(nd.mu, nd.sd, GPUtility.NextProba());
+                        double sample = Normal.InvCDF(nd.mu, Math.Exp(matrixForNoise.getPosterior(xyPair.x).mu), GPUtility.NextProba());
                         varEstimate += Math.Pow((xyPair.y - sample), 2);
                     }
                     varEstimate *= 0.5 / HETEROSCEDASTIC_POINT_SAMPLE_SIZE;
@@ -84,14 +84,16 @@ namespace GaussianRegression.Core
                 }
                 else
                 {
-                    //Utility.Log("Current Error " + currentError);
                     previousNoiseSum = nextNoiseSum;
                 }
+                    GPUtility.Log("Current Error " + currentError);
 
                 //2. Construct another Gaussian CovMatrix to evaluate noise
                 matrixForNoise = new CovMatrix(cf, noise_z, delta);
                 //3. Update the diagonal matrices for this
-                this.updateNoise(noise_z);
+
+
+                //this.updateNoise(noise_z);
                 
                 counter++;
             }

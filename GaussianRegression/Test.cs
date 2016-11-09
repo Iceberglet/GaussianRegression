@@ -11,9 +11,77 @@ using GaussianRegression.Core;
 
 namespace GaussianRegression
 {
+    public class Solution
+    {
+        public double LFValue { get; set; }
+        public double HFValue { get; set; }
+        public int LFRank { get; set; }
+        public int HFRank { get; set; }
+        public double proba { get; set; }
+        public double a { get; set; }
+        public double b { get; set; }
+        public double c { get; set; }
+    }
+
     static class Test
     {
         static Random rand = new Random();
+
+        public static void testXu2014(int gg)
+        {
+            Func<List<Solution>, List<Solution>> RankAndSort = (solutions) =>
+            {
+                int rank;
+                rank = 0; foreach (var s in solutions.OrderBy(s => s.HFValue)) s.HFRank = rank++;
+                rank = 0; foreach (var s in solutions.OrderBy(s => s.LFValue)) s.LFRank = rank++;
+                return solutions.OrderBy(s => s.LFRank).ToList();
+            };
+
+            Func<int, List<Solution>> Xu2014 = (g) =>
+            {
+                var solutions = new List<Solution>();
+                for (var x = 0.0; x <= 100; x += 0.1)
+                {
+                    double lfValue = 0;
+                    switch (g)
+                    {
+                        case 1: lfValue = -(Math.Pow(Math.Sin(0.09 * Math.PI * x), 6) / Math.Pow(2, 2 * Math.Pow((x - 10) / 80, 2))); break; // g1
+                        case 2: lfValue = -(Math.Pow(Math.Sin(0.09 * Math.PI * (x - 1.2)), 6) / Math.Pow(2, 2 * Math.Pow((x - 10) / 80, 2))); break; // g2
+                        case 3: lfValue = -(Math.Pow(Math.Sin(0.09 * Math.PI * (x - 5)), 6) / Math.Pow(2, 2 * Math.Pow((x - 10) / 80, 2))); break; // g3
+                    }
+                    solutions.Add(new Solution
+                    {
+                        HFValue = -(Math.Pow(Math.Sin(0.09 * Math.PI * x), 6) / Math.Pow(2, 2 * Math.Pow((x - 10) / 80, 2)) +
+                                0.1 * Math.Cos(0.5 * Math.PI * x) + 0.5 * Math.Pow((x - 40) / 60, 2) + 0.4 * Math.Sin((x + 10) / 100 * Math.PI)),
+                        LFValue = lfValue,
+                    });
+                }
+                return RankAndSort(solutions);
+            };
+
+
+            var num = 50;
+            var sols = Xu2014(gg);
+            var sampled = new List<Solution>();
+
+            for (int i = 0; i < num; i++)
+            {
+                var idx = sols.Count / num * i + rand.Next(0, sols.Count / num);
+                sampled.Add(sols.ElementAt(idx));
+            }
+
+            var initial = sampled.Select(s => new XYPair(GPUtility.V(s.LFRank), s.HFValue)).ToList();
+            var list_x = sols.Select(s => new LabeledVector(s.LFRank, GPUtility.V(s.LFRank))).ToList();
+            var myGP = new GP(initial, list_x, CovFunction.SquaredExponential(new LengthScale(150), new SigmaF(0.02)) + CovFunction.GaussianNoise(new SigmaJ(0.0001)),
+                    heteroscedastic: true,
+                    sigma_f: 1
+                    );
+            var res = myGP.predict();
+
+            FileService fs = new FileService("Test.csv");
+
+            fs.writeToFile(FileService.convertGPResult(res, sampled.Select(s => new XYPair(GPUtility.V(s.LFRank), s.HFValue)).ToList()));
+        }
 
 
         public static void testSimple()
@@ -70,7 +138,7 @@ namespace GaussianRegression
 
         public static void testComplex()
         {
-            Func<double, double> f_pure = x => -(x - 134) * (x - 167) / 100.0 + 250;
+            Func<double, double> f_pure = x => -(x - 134) * (x - 167) / 100.0 - 10000;
             Func<double, double> f_sd = x => 60 + Math.Exp(x / 100);
             Func<double, double> f = x => f_pure(x) + Normal.InvCDF(0, f_sd(x), rand.NextDouble());
 
@@ -91,11 +159,11 @@ namespace GaussianRegression
                 if (rand.NextDouble() < 0.15)
                     sampled.Add(newPair);
             }
-            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(40), new SigmaF(10)) + CovFunction.GaussianNoise(new SigmaJ(10));
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(60), new SigmaF(100)) + CovFunction.GaussianNoise(new SigmaJ(0.1));
             
             GP myGP = new GP(sampledValues: sampled, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
                 heteroscedastic: true,
-                lengthScale: 40, sigma_f: 60);
+                lengthScale: 40, sigma_f: 60, sigma_jitter : 0.1);
             var res = myGP.predict();
 
             FileService fs = new FileService("Test.csv");

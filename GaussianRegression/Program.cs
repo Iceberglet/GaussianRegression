@@ -15,11 +15,13 @@ namespace GaussianRegression
     {
         static void Main(string[] args)
         {
-            Test.testMotor();
+            //Test.testComplex();
+            Test.testXu2014(2);
+            //Test.testMotor();
 
             /*
-            var x1 = Utility.V(1);
-            var x2 = Utility.V(0);
+            var x1 = GPUtility.V(1);
+            var x2 = GPUtility.V(0);
 
             CovFunction cf = CovFunction.SquaredExponential(new LengthScale(1), new SigmaF(1)) + CovFunction.GaussianNoise(new SigmaJ(1));
             Utility.Log("Before: L: " + cf.param[typeof(LengthScale)].value);

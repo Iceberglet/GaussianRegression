@@ -25,8 +25,7 @@ namespace GaussianRegression.Core
 
         public GP(List<XYPair> sampledValues, List<LabeledVector> list_x, CovFunction cov_f,
             bool estimateHyperPara = false, bool heteroscedastic = false,           //configs
-            double lengthScale = 1, double sigma_f = 1, double sigma_jitter = 1,       //hyper parameters
-            double delta = 0.0005
+            double lengthScale = 1, double sigma_f = 1, double sigma_jitter = 1       //hyper parameters
             )
         {
             this.list_x = list_x;
@@ -38,6 +37,7 @@ namespace GaussianRegression.Core
             if (heteroscedastic)
                 this.sigma_f = Statistics.StandardDeviation(sampledValues.Select(xy => xy.y)) / 10;
             this.sigma_jitter = sigma_jitter;
+            var delta = 0.005;
 
             this.cov_f = cov_f;
 
