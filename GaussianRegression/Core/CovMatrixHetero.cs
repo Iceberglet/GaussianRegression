@@ -65,7 +65,7 @@ namespace GaussianRegression.Core
 
                     for (int i = 0; i < HETEROSCEDASTIC_POINT_SAMPLE_SIZE; i++)
                     {
-                        double sample = Normal.InvCDF(nd.mu, Math.Exp(matrixForNoise.getPosterior(xyPair.x).mu), GPUtility.NextProba());
+                        double sample = Normal.InvCDF(nd.mu, nd.sd, GPUtility.NextProba());
                         varEstimate += Math.Pow((xyPair.y - sample), 2);
                     }
                     varEstimate *= 0.5 / HETEROSCEDASTIC_POINT_SAMPLE_SIZE;
@@ -86,14 +86,14 @@ namespace GaussianRegression.Core
                 {
                     previousNoiseSum = nextNoiseSum;
                 }
-                    GPUtility.Log("Current Error " + currentError);
+                GPUtility.Log("Current Error " + currentError);
 
                 //2. Construct another Gaussian CovMatrix to evaluate noise
                 matrixForNoise = new CovMatrix(cf, noise_z, delta);
                 //3. Update the diagonal matrices for this
 
 
-                //this.updateNoise(noise_z);
+                this.updateNoise(noise_z);
                 
                 counter++;
             }

@@ -60,7 +60,7 @@ namespace GaussianRegression
             };
 
 
-            var num = 50;
+            var num = 200;
             var sols = Xu2014(gg);
             var sampled = new List<Solution>();
 
@@ -72,15 +72,15 @@ namespace GaussianRegression
 
             var initial = sampled.Select(s => new XYPair(GPUtility.V(s.LFRank), s.HFValue)).ToList();
             var list_x = sols.Select(s => new LabeledVector(s.LFRank, GPUtility.V(s.LFRank))).ToList();
-            var myGP = new GP(initial, list_x, CovFunction.SquaredExponential(new LengthScale(150), new SigmaF(0.02)) + CovFunction.GaussianNoise(new SigmaJ(0.0001)),
-                    heteroscedastic: true,
+            var myGP = new GP(initial, list_x, CovFunction.SquaredExponential(new LengthScale(20), new SigmaF(0.7)) + CovFunction.GaussianNoise(new SigmaJ(0.0001)),
+                    heteroscedastic: true, estimateHyperPara: false,
                     sigma_f: 1
                     );
             var res = myGP.predict();
 
             FileService fs = new FileService("Test.csv");
 
-            fs.writeToFile(FileService.convertGPResult(res, sampled.Select(s => new XYPair(GPUtility.V(s.LFRank), s.HFValue)).ToList()));
+            fs.writeToFile(FileService.convertGPResult(res, initial));
         }
 
 
@@ -138,7 +138,7 @@ namespace GaussianRegression
 
         public static void testComplex()
         {
-            Func<double, double> f_pure = x => -(x - 134) * (x - 167) / 100.0 - 10000;
+            Func<double, double> f_pure = x => -(x - 134) * (x - 167) / 100.0 - 1000;
             Func<double, double> f_sd = x => 60 + Math.Exp(x / 100);
             Func<double, double> f = x => f_pure(x) + Normal.InvCDF(0, f_sd(x), rand.NextDouble());
 
@@ -159,7 +159,7 @@ namespace GaussianRegression
                 if (rand.NextDouble() < 0.15)
                     sampled.Add(newPair);
             }
-            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(60), new SigmaF(100)) + CovFunction.GaussianNoise(new SigmaJ(0.1));
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(20), new SigmaF(1)) + CovFunction.GaussianNoise(new SigmaJ(0.1));
             
             GP myGP = new GP(sampledValues: sampled, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
                 heteroscedastic: true,
