@@ -51,8 +51,8 @@ namespace GaussianRegression.Core
                 mo.optimize();
             }
 
-            if (heteroscedastic)
-                ((CovMatrixHetero)covMatrix).performNoiseAnalysis();
+            //if (heteroscedastic)
+            //    ((CovMatrixHetero)covMatrix).performNoiseAnalysis();
 
             GPUtility.Log("Final Hypers: " + string.Join(", ", cov_f.param.Select(kv => kv.Value.value).ToArray()));
         }

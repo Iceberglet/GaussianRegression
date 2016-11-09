@@ -72,7 +72,8 @@ namespace GaussianRegression
 
             var initial = sampled.Select(s => new XYPair(GPUtility.V(s.LFRank), s.HFValue)).ToList();
             var list_x = sols.Select(s => new LabeledVector(s.LFRank, GPUtility.V(s.LFRank))).ToList();
-            var myGP = new GP(initial, list_x, CovFunction.SquaredExponential(new LengthScale(20), new SigmaF(0.7)) + CovFunction.GaussianNoise(new SigmaJ(0.0001)),
+            var myGP = new GP(initial, list_x, 
+                    CovFunction.SquaredExponential(new LengthScale(50), new SigmaF(0.6)) + CovFunction.GaussianNoise(new SigmaJ(0.05)),
                     heteroscedastic: true, estimateHyperPara: false,
                     sigma_f: 1
                     );

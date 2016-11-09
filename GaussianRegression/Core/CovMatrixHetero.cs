@@ -34,7 +34,7 @@ namespace GaussianRegression.Core
 
         private static readonly int MAX_HETEROSCEDASTIC_ITERATION = 100;
         private static readonly int HETEROSCEDASTIC_POINT_SAMPLE_SIZE = 20;
-        private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.03;
+        private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.003;
 
         //Using Most Likely Heteroscedastic Approach
         //http://www.machinelearning.org/proceedings/icml2007/papers/326.pdf
@@ -121,7 +121,7 @@ namespace GaussianRegression.Core
         {
             var res = base.getPosterior(x_0);
             var moreSD = Math.Exp(matrixForNoise.getPosterior(x_0).mu);     //Notice the Exp
-            return new NormalDistribution(res.mu, res.sd + moreSD);
+            return new NormalDistribution(res.mu, Math.Sqrt(res.sd * res.sd + moreSD * moreSD));
         }
 
 
