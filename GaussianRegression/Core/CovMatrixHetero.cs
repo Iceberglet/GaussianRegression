@@ -47,7 +47,7 @@ namespace GaussianRegression.Core
 
             while (counter < MAX_HETEROSCEDASTIC_ITERATION && !converged)
             {
-                Utility.Log("Heteroscedastic Iter: " + counter);
+                //Utility.Log("Heteroscedastic Iter: " + counter);
 
                 //1. Get Empirical Noise at all sampled points on GP_0
                 List<XYPair> noise_z = new List<XYPair>();  //Note: the y here refers to the noise term
@@ -84,7 +84,7 @@ namespace GaussianRegression.Core
                 }
                 else
                 {
-                    Utility.Log("Current Error " + currentError);
+                    //Utility.Log("Current Error " + currentError);
                     previousNoiseSum = nextNoiseSum;
                 }
 

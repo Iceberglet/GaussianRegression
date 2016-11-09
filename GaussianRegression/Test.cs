@@ -51,10 +51,10 @@ namespace GaussianRegression
                 list_x.Add(Utility.V(x));
             }
 
-            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(8), new SigmaF(20)) + CovFunction.GaussianNoise(new SigmaJ(1));
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(2), new SigmaF(2)) + CovFunction.GaussianNoise(new SigmaJ(2));
 
             GP myGP = new GP(sampledValues: values, list_x: list_x.ToList(), cov_f: cf,
-                heteroscedastic: true,
+                heteroscedastic: true, estimateHyperPara: true,
                 lengthScale: 60, sigma_f: 20);
             var res = myGP.predict();
 

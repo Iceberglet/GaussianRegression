@@ -47,8 +47,11 @@ namespace GaussianRegression.Core
 
             if (estimateHyperPara)
             {
-                //cov_f.param;
+                ModelOptimizer mo = new ModelOptimizer(covMatrix, cov_f);
+                mo.optimize();
             }
+            
+            Utility.Log("Final Hypers: " + string.Join(", ", cov_f.param.Select(kv => kv.Value.value).ToArray()));
         }
 
         //NOTE must be set null after every time GP is modified

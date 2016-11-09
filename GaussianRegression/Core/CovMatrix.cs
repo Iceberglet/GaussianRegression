@@ -22,13 +22,16 @@ namespace GaussianRegression.Core
             get { return K_B; }
             set {
                 K_B = value;
-                if(K_diag == null || K_B.ColumnCount != K_diag.ColumnCount)
+                if (value != null)
                 {
-                    K_diag = Matrix<double>.Build.Dense(K_B.RowCount, K_B.ColumnCount);
+                    if (K_diag == null || K_B.ColumnCount != K_diag.ColumnCount)
+                    {
+                        K_diag = Matrix<double>.Build.Dense(K_B.RowCount, K_B.ColumnCount);
+                    }
+                    K = K_B.Add(K_diag);        //Sets K
+                    K_inverse = K.Inverse();    //Sets K_inverse
                 }
-                K = K_B.Add(K_diag);        //Sets K
-                K_inverse = K.Inverse();    //Sets K_inverse
-            }   //also sets the inverse
+            }
         }
         protected Matrix<double> K_B;
 
@@ -58,9 +61,7 @@ namespace GaussianRegression.Core
         {
             return xyPairs.Select(xy => xy.x).ToList();
         }
-
-
-
+        
         public CovMatrix(CovFunction cf, List<XYPair> list_xy = null, double delta = 0.0005)
         {
             this.cf = cf;
@@ -106,6 +107,14 @@ namespace GaussianRegression.Core
         public void addX(XYPair xy)
         {
             addX(new XYPair[] { xy }.ToList());
+        }
+
+        public void recalculate()
+        {
+            K_base = null;
+            var temp = this.xyPairs;
+            this.xyPairs = new XYPair[0];
+            addX(temp.ToList());
         }
 
         public virtual NormalDistribution getPosterior(Vector<double> x_0)

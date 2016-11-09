@@ -30,6 +30,17 @@ namespace GaussianRegression.Core
                 return false;
             return true;
         }
+
+
+        public static Hyperparam createInstance(Type type, double value)
+        {
+            if(!type.IsSubclassOf(typeof(Hyperparam)))
+                throw new InvalidCastException("Wrong Type Input for Hyperparam: " + type);
+            
+            var obj = Activator.CreateInstance(type, new Object[1] { value });
+            dynamic changedObj = Convert.ChangeType(obj, type);
+            return changedObj;
+        }
     }
 
     public sealed class LengthScale : Hyperparam

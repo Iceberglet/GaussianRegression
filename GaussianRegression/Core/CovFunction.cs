@@ -12,18 +12,19 @@ namespace GaussianRegression.Core
     {
         public static CovFunction SquaredExponential(LengthScale L, SigmaF SF)
         {
-            var l = L.value;
-            var sf = SF.value;
-            double l2 = 2 * l * l;
-            double sigma2 = sf * sf;
+            CovFunction res = null;
             Func<Vector<double>, Vector<double>, double> newF = (a, b) =>
             {
+                var l2 = res == null ? 2 * L.value * L.value : res.param[typeof(LengthScale)].value;
+                var sigma2 = res == null ? SF.value * SF.value : res.param[typeof(SigmaF)].value;
                 double d = (a - b).L2Norm();
                 return sigma2 * Math.Exp(-d * d / l2);
             };
 
             Func<Type, Func<Vector<double>, Vector<double>, double>> newDiff = (t) =>
             {
+                var l = res == null ? L.value : res.param[typeof(LengthScale)].value;
+                var sf = res == null ? SF.value : res.param[typeof(SigmaF)].value;
                 if (t == typeof(LengthScale))
                 {
                     return (a, b) =>
@@ -43,16 +44,17 @@ namespace GaussianRegression.Core
                 else return (a, b) => 0;
             };
 
-            CovFunction res = new CovFunction(newF, newDiff);
+            res = new CovFunction(newF, newDiff);
             res.addParams(L, SF);
             return res;
         }
 
         public static CovFunction GaussianNoise(SigmaJ SJ)
         {
-            var sj = SJ.value;
+            CovFunction res = null;
             Func<Vector<double>, Vector<double>, double> newF = (a, b) =>
             {
+                var sj = res == null ? SJ.value : res.param[typeof(SigmaJ)].value;
                 if (a.SequenceEqual(b))
                 {
                     return sj * sj;
@@ -62,6 +64,7 @@ namespace GaussianRegression.Core
 
             Func<Type, Func<Vector<double>, Vector<double>, double>> newDiff = (t) =>
             {
+                var sj = res == null ? SJ.value : res.param[typeof(SigmaJ)].value;
                 if (t == typeof(SigmaJ))
                 {
                     return (a, b) =>
@@ -76,7 +79,7 @@ namespace GaussianRegression.Core
                 else return (a, b) => 0;
             };
 
-            CovFunction res = new CovFunction(newF, newDiff);
+            res = new CovFunction(newF, newDiff);
             res.addParams(SJ);
             return res;
         }
@@ -90,11 +93,11 @@ namespace GaussianRegression.Core
 
         //public readonly List<Func<Vector<double>, Vector<double>, double>> f_derivatives;
 
-        internal readonly Dictionary<Type, Hyperparam> param;
+        internal Dictionary<Type, Hyperparam> param;
         internal readonly Func<Vector<double>, Vector<double>, double> f;
         internal readonly Func<Type, Func<Vector<double>, Vector<double>, double>> differential;
 
-        private void addParams(params Hyperparam[] param)
+        internal void addParams(params Hyperparam[] param)
         {
             foreach(var i in param)
             {
@@ -127,6 +130,9 @@ namespace GaussianRegression.Core
                 res.addParams(hyper.Value);
             foreach (var hyper in f2.param)
                 res.addParams(hyper.Value);
+            //Repointing the subfunction param pointer
+            f1.param = res.param;
+            f2.param = res.param;
             return res;
         }
     }
