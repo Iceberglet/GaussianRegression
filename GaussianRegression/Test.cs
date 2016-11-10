@@ -60,24 +60,33 @@ namespace GaussianRegression
             };
 
 
-            var num = 200;
+            var num = 50;
             var sols = Xu2014(gg);
             var sampled = new List<Solution>();
-
+            
             for (int i = 0; i < num; i++)
             {
-                var idx = sols.Count / num * i + rand.Next(0, sols.Count / num);
+                var idx = sols.Count / num * i + rand.Next(1, sols.Count / num);
                 sampled.Add(sols.ElementAt(idx));
             }
-
+            
             var initial = sampled.Select(s => new XYPair(GPUtility.V(s.LFRank), s.HFValue)).ToList();
             var list_x = sols.Select(s => new LabeledVector(s.LFRank, GPUtility.V(s.LFRank))).ToList();
             var myGP = new GP(initial, list_x, 
-                    CovFunction.SquaredExponential(new LengthScale(50), new SigmaF(0.6)) + CovFunction.GaussianNoise(new SigmaJ(0.05)),
+                    CovFunction.SquaredExponential(new LengthScale(125), new SigmaF(0.7)) + CovFunction.GaussianNoise(new SigmaJ(0.01)),
                     heteroscedastic: true, estimateHyperPara: false,
                     sigma_f: 1
                     );
             var res = myGP.predict();
+
+            for (int i = 0; i < num; i++)
+            {
+                var idx = sols.Count / num * i;
+                var sol = sols.ElementAt(idx);
+                myGP.addPoint(new XYPair(GPUtility.V(sol.LFRank), sol.HFValue));
+                res = myGP.predict();
+            }
+
 
             FileService fs = new FileService("Test.csv");
 

@@ -29,6 +29,8 @@ namespace GaussianRegression.Core
                         K_diag = Matrix<double>.Build.Dense(K_B.RowCount, K_B.ColumnCount);
                     }
                     K = K_B.Add(K_diag);        //Sets K
+                    if (K.Determinant() == 0)
+                        throw new Exception("Invalid K: Singular");
                     K_inverse = K.Inverse();    //Sets K_inverse
                 }
             }
@@ -76,8 +78,17 @@ namespace GaussianRegression.Core
         //Expand the matrix
         protected virtual void addX(List<XYPair> pairs)
         {
+            //var DebugSampled = xyPairs.Select(xy => xy.x.At(0)).OrderBy(x => x).ToList();
+            //var DebugNewX = pairs.Select(xy => xy.x.At(0)).OrderBy(x => x).ToList();
+
             if (pairs == null || pairs.Count == 0)
                 throw new Exception("You are adding 0 new elements to the matrix");
+
+            if(pairs.Any(p => xyPairs.Contains(p)))
+                throw new Exception("You are adding a known point! ");
+
+            if (pairs.Distinct().Count() != pairs.Count)
+                throw new Exception("You have multiple points with the same X value! ");
 
             int originalSize = 0;
             double[,] currentMatrix = null;
@@ -104,14 +115,8 @@ namespace GaussianRegression.Core
             K_base = Matrix<double>.Build.DenseOfArray(covValues);
         }
 
-        public void addX(XYPair xy)
+        public virtual void addX(XYPair xy)
         {
-            if (xyPairs.Contains(xy))
-            {
-                GPUtility.Log("You are adding an existing point to samples");
-                return;
-            }
-
             addX(new XYPair[] { xy }.ToList());
         }
 
@@ -163,11 +168,11 @@ namespace GaussianRegression.Core
                 double det_base = K_base.Determinant();
                 double det = K.Determinant();
                 Matrix<double> k1 = K_1_multiply_K_inverse.Multiply(Y);
-                throw new Exception("Unlikely Results!");
+                throw new Exception("Unlikely Mu Results!");
             }
 
             if (double.IsNaN(sd) || double.IsInfinity(sd) || sd < 0)
-                throw new Exception("Unlikely Results!");
+                throw new Exception("Unlikely Sd Results!");
 
             sd = Math.Sqrt(sd);
 

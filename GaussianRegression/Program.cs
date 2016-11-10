@@ -33,7 +33,7 @@ namespace GaussianRegression
             Utility.Log("After: F: " + cf.f(x1, x2));*/
 
             Console.WriteLine("End of Execution.");
-            Console.ReadLine();
+            //Console.ReadLine();
         }
     }
 }

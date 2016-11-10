@@ -17,18 +17,18 @@ namespace GaussianRegression.Core
 
         public CovMatrixHetero(CovFunction cf, List<XYPair> list_xy = null, double sigma_f = 1, double delta = 0.0005) : base(cf, list_xy, delta)
         {
-            var initialZeroNoise = list_xy.Select(xy => new XYPair(xy.x, sigma_f)).ToList();
+            var initialNoise = list_xy.Select(xy => new XYPair(xy.x, sigma_f)).ToList();
             var diag = Enumerable.Repeat(0d, list_xy.Count).ToArray();
-            matrixForNoise = new CovMatrix(cf, initialZeroNoise, delta);
+            matrixForNoise = new CovMatrix(cf, initialNoise, delta);
             K_diag = Matrix<double>.Build.Diagonal(diag);
             K_base = K_base;
             this.performNoiseAnalysis();
         }
 
         //Add noise evaluation process
-        private new void addX(List<XYPair> pairs)
+        public override void addX(XYPair pair)
         {
-            base.addX(pairs);
+            base.addX(pair);
             this.performNoiseAnalysis();
         }
 

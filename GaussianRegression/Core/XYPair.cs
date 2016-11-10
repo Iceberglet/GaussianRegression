@@ -18,6 +18,11 @@ namespace GaussianRegression.Core
             this.x = x;
             this.y = y;
         }
+
+        public override bool Equals(object obj)
+        {
+            return ((XYPair)obj).x.SequenceEqual(this.x);
+        }
     }
 
     public class LabeledVector
