@@ -60,7 +60,13 @@ namespace GaussianRegression.Core
             GPUtility.Log("Final Hypers: " + string.Join(", ", cov_f.param.Select(kv => kv.Value.value).ToArray()), GPUtility.LogLevel.DEBUG);
 
             if (heteroscedastic)
+            {
                 ((CovMatrixHetero)covMatrix).performNoiseAnalysis();
+
+                //For Debug Purpose
+                ((CovMatrixHetero)covMatrix).evaluateHeteroResult(list_x);
+            }
+
         }
 
         private void initializeHyperparameterBounds(List<Hyperparam> minBounds, List<Hyperparam> maxBounds, List<XYPair> sampledValues)

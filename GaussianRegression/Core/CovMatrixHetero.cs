@@ -23,7 +23,7 @@ namespace GaussianRegression.Core
 
             //var ls = cf.param.ContainsKey(typeof(LengthScale)) ? (LengthScale)cf.param[typeof(LengthScale)] : new LengthScale(10) ;
             var ls = (LengthScale)cf.param[typeof(LengthScale)];
-            this.cf_noise = CovFunction.SquaredExponential(ls, new SigmaF(this.indicativeSd)) + CovFunction.GaussianNoise(new SigmaJ(0.5));
+            this.cf_noise = CovFunction.SquaredExponential(new LengthScale(ls.value), new SigmaF(this.indicativeSd)) + CovFunction.GaussianNoise(new SigmaJ(0.5));
             var initialNoise = list_xy.Select(xy => new XYPair(xy.x, indicativeSd)).ToList();
             var diag = Enumerable.Repeat(0d, list_xy.Count).ToArray();
             matrixForNoise = new CovMatrix(cf_noise, initialNoise, delta);
@@ -42,6 +42,7 @@ namespace GaussianRegression.Core
         private static readonly int MAX_HETEROSCEDASTIC_ITERATION = 100;
         private static readonly int HETEROSCEDASTIC_POINT_SAMPLE_SIZE = 20;
         private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.003;
+        List<XYPair> noise_z = new List<XYPair>();
 
         //Using Most Likely Heteroscedastic Approach
         //http://www.machinelearning.org/proceedings/icml2007/papers/326.pdf
@@ -57,7 +58,7 @@ namespace GaussianRegression.Core
                 GPUtility.Log("Heteroscedastic Iter: " + counter, GPUtility.LogLevel.DEBUG);
 
                 //1. Get Empirical Noise at all sampled points on GP_0
-                List<XYPair> noise_z = new List<XYPair>();  //Note: the y here refers to the noise term
+                noise_z = new List<XYPair>();  //Note: the y here refers to the noise term
                 List<XYPair> knownPoints = this.xyPairs.ToList();
 
                 Dictionary<Vector<double>, NormalDistribution> dictForSampled = new Dictionary<Vector<double>, NormalDistribution>();
@@ -104,6 +105,24 @@ namespace GaussianRegression.Core
                 
                 counter++;
             }
+        }
+        
+        //For Debug Purpose Only
+        public void evaluateHeteroResult(List<LabeledVector> list_x)
+        {
+            //Design points
+            var varPredictions = new Dictionary<LabeledVector, double>();
+            list_x.ForEach(x => varPredictions.Add(x, matrixForNoise.getPosterior(x.x).mu));
+            FileService fs = new FileService("VarResult.csv");
+            var listString = new List<string>();
+            //Sampled points
+            xyPairs.ToList().ForEach(xy => {
+                double est = this.getPosterior(xy.x).mu;
+                listString.Add(xy.x.toString() + "," + Math.Abs(xy.y - est));
+            });
+            varPredictions.Keys.ToList().ForEach(vect => listString.Add(vect.x.toString() + ",," + Math.Exp(varPredictions[vect])));
+            noise_z.ForEach(xy => listString.Add(xy.x.toString() + ",,," + Math.Exp(xy.y)));
+            fs.writeToFile(listString.ToArray());
         }
 
         //Updates the K_diag and predicted noise term for each point
