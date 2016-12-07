@@ -86,6 +86,7 @@ namespace GaussianRegression.Core
             };
 
             res = new CovFunction(newF, newDiff);
+
             res.addParams(SJ);
             return res;
         }
@@ -96,9 +97,6 @@ namespace GaussianRegression.Core
         }
 
         // *********** Actual Implementation *************
-
-        //public readonly List<Func<Vector<double>, Vector<double>, double>> f_derivatives;
-
         internal Dictionary<Type, Hyperparam> param;
         internal readonly Func<Vector<double>, Vector<double>, double> f;
         internal readonly Func<Type, Func<Vector<double>, Vector<double>, double>> differential;

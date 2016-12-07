@@ -73,27 +73,25 @@ namespace GaussianRegression
             var initial = sampled.Select(s => new XYPair(GPUtility.V(s.LFRank), s.HFValue)).ToList();
             var list_x = sols.Select(s => new LabeledVector(s.LFRank, GPUtility.V(s.LFRank))).ToList();
             var myGP = new GP(initial, list_x, 
-                    CovFunction.SquaredExponential(new LengthScale(125), new SigmaF(0.7)) + CovFunction.GaussianNoise(new SigmaJ(0.01)),
-                    heteroscedastic: true, estimateHyperPara: false,
-                    sigma_f: 1
+                    CovFunction.SquaredExponential(new LengthScale(100), new SigmaF(0.3)) + CovFunction.GaussianNoise(new SigmaJ(0.05)),
+                    heteroscedastic: true, estimateHyperPara: true
                     );
             var res = myGP.predict();
 
+            /*
             for (int i = 0; i < num; i++)
             {
                 var idx = sols.Count / num * i;
                 var sol = sols.ElementAt(idx);
                 myGP.addPoint(new XYPair(GPUtility.V(sol.LFRank), sol.HFValue));
                 res = myGP.predict();
-            }
+            }*/
 
 
-            FileService fs = new FileService("Test.csv");
+            FileService fs = new FileService("TestXu2014.csv");
 
             fs.writeToFile(FileService.convertGPResult(res, initial));
         }
-
-
         public static void testSimple()
         {
             List<XYPair> values = new List<XYPair>();
@@ -110,15 +108,31 @@ namespace GaussianRegression
             CovFunction cf = CovFunction.SquaredExponential(new LengthScale(8), new SigmaF(50)) + CovFunction.GaussianNoise(new SigmaJ(50));
             
             GP myGP = new GP(sampledValues: values, list_x: list_x.ToList(), cov_f: cf,
-                heteroscedastic: false,
-                lengthScale: 60, sigma_f: 20);
+                heteroscedastic: false, estimateHyperPara: true
+                );
             var res = myGP.predict();
 
             FileService fs = new FileService("Test.csv");
 
             fs.writeToFile(FileService.convertGPResult(res, values));
         }
+        public static void testHyperparameterEstimation()
+        {
+            List<XYPair> values = FileService.readFromFile("Motor.txt", separator: '\t');
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(8), new SigmaF(20)) + CovFunction.GaussianNoise(new SigmaJ(1));
+            CovMatrix covMatrix = new CovMatrix(cf, values);
+            //TODO: Replace the nulls
+            ModelOptimizer mo = new ModelOptimizer(covMatrix, cf, null, null);
 
+            //Add testing limits
+            Dictionary<Type, Tuple<Hyperparam, Hyperparam>> dict = new Dictionary<Type, Tuple<Hyperparam, Hyperparam>>();
+            dict.Add(typeof(LengthScale), new Tuple<Hyperparam, Hyperparam>(new LengthScale(1), new LengthScale(20)));
+            dict.Add(typeof(SigmaF), new Tuple<Hyperparam, Hyperparam>(new SigmaF(5), new SigmaF(35)));
+            dict.Add(typeof(SigmaJ), new Tuple<Hyperparam, Hyperparam>(new LengthScale(0.1), new LengthScale(10)));
+
+            mo.evaluateLog(dict);
+            
+        }
         public static void testMotor()
         {
             List<XYPair> values = FileService.readFromFile("Motor.txt", separator : '\t');
@@ -133,18 +147,17 @@ namespace GaussianRegression
             var SF = Math.Sqrt(Statistics.Variance(values.Select(xy => xy.y))) / 2;
             //Utility.Log("Variance determined as: " + SF);
 
-            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(8), new SigmaF(20)) + CovFunction.GaussianNoise(new SigmaJ(1));
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(5), new SigmaF(10)) + CovFunction.GaussianNoise(new SigmaJ(0.5));
 
             GP myGP = new GP(sampledValues: values, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
-                heteroscedastic: true, estimateHyperPara: false,
-                lengthScale: 60, sigma_f: 20);
+                heteroscedastic: true, estimateHyperPara: true
+                );
             var res = myGP.predict();
 
             FileService fs = new FileService("Test.csv");
 
             fs.writeToFile(FileService.convertGPResult(res, values));
         }
-
 
         public static void testComplex()
         {
@@ -170,10 +183,10 @@ namespace GaussianRegression
                     sampled.Add(newPair);
             }
             CovFunction cf = CovFunction.SquaredExponential(new LengthScale(20), new SigmaF(1)) + CovFunction.GaussianNoise(new SigmaJ(0.1));
-            
+
             GP myGP = new GP(sampledValues: sampled, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
-                heteroscedastic: true,
-                lengthScale: 40, sigma_f: 60, sigma_jitter : 0.1);
+                heteroscedastic: true, estimateHyperPara: true
+                );
             var res = myGP.predict();
 
             FileService fs = new FileService("Test.csv");

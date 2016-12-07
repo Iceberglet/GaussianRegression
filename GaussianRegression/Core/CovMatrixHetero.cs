@@ -14,15 +14,22 @@ namespace GaussianRegression.Core
     class CovMatrixHetero : CovMatrix
     {
         CovMatrix matrixForNoise;
+        CovFunction cf_noise;
+        double indicativeSd;
 
         public CovMatrixHetero(CovFunction cf, List<XYPair> list_xy = null, double sigma_f = 1, double delta = 0.0005) : base(cf, list_xy, delta)
         {
-            var initialNoise = list_xy.Select(xy => new XYPair(xy.x, sigma_f)).ToList();
+            this.indicativeSd = sigma_f;
+
+            //var ls = cf.param.ContainsKey(typeof(LengthScale)) ? (LengthScale)cf.param[typeof(LengthScale)] : new LengthScale(10) ;
+            var ls = (LengthScale)cf.param[typeof(LengthScale)];
+            this.cf_noise = CovFunction.SquaredExponential(ls, new SigmaF(this.indicativeSd)) + CovFunction.GaussianNoise(new SigmaJ(0.5));
+            var initialNoise = list_xy.Select(xy => new XYPair(xy.x, indicativeSd)).ToList();
             var diag = Enumerable.Repeat(0d, list_xy.Count).ToArray();
-            matrixForNoise = new CovMatrix(cf, initialNoise, delta);
+            matrixForNoise = new CovMatrix(cf_noise, initialNoise, delta);
             K_diag = Matrix<double>.Build.Diagonal(diag);
             K_base = K_base;
-            this.performNoiseAnalysis();
+            //this.performNoiseAnalysis();
         }
 
         //Add noise evaluation process
@@ -47,7 +54,7 @@ namespace GaussianRegression.Core
 
             while (counter < MAX_HETEROSCEDASTIC_ITERATION && !converged)
             {
-                GPUtility.Log("Heteroscedastic Iter: " + counter);
+                GPUtility.Log("Heteroscedastic Iter: " + counter, GPUtility.LogLevel.DEBUG);
 
                 //1. Get Empirical Noise at all sampled points on GP_0
                 List<XYPair> noise_z = new List<XYPair>();  //Note: the y here refers to the noise term
@@ -86,12 +93,12 @@ namespace GaussianRegression.Core
                 {
                     previousNoiseSum = nextNoiseSum;
                 }
-                GPUtility.Log("Current Error " + currentError);
+                GPUtility.Log("Current Error " + currentError, GPUtility.LogLevel.DEBUG);
 
                 //2. Construct another Gaussian CovMatrix to evaluate noise
-                matrixForNoise = new CovMatrix(cf, noise_z, delta);
+                //********** TODO: alter the covariance func instead of using the given one!
+                matrixForNoise = new CovMatrix(cf_noise, noise_z, delta);
                 //3. Update the diagonal matrices for this
-
 
                 this.updateNoise(noise_z);
                 
@@ -120,6 +127,7 @@ namespace GaussianRegression.Core
         public override NormalDistribution getPosterior(Vector<double> x_0)
         {
             var res = base.getPosterior(x_0);
+            //The R term in machine learning paper eq.(2)
             var moreSD = Math.Exp(matrixForNoise.getPosterior(x_0).mu);     //Notice the Exp
             return new NormalDistribution(res.mu, Math.Sqrt(res.sd * res.sd + moreSD * moreSD));
         }

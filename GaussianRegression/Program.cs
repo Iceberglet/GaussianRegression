@@ -18,7 +18,8 @@ namespace GaussianRegression
             //Test.testComplex();
             Test.testXu2014(2);
             //Test.testMotor();
-
+            //Test.testSimple();
+            //Test.testHyperparameterEstimation();
             /*
             var x1 = GPUtility.V(1);
             var x2 = GPUtility.V(0);
@@ -33,7 +34,7 @@ namespace GaussianRegression
             Utility.Log("After: F: " + cf.f(x1, x2));*/
 
             Console.WriteLine("End of Execution.");
-            //Console.ReadLine();
+            Console.ReadLine();
         }
     }
 }

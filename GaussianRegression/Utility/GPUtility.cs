@@ -81,14 +81,31 @@ namespace GaussianRegression.Core
             return a;
         }
 
-
-        private static readonly bool login = true;
-        public static void Log(string s)
+        public enum LogLevel
         {
-            if (login)
-                Console.WriteLine(s);
+            DEBUG = 0,
+            INFO = 1,
+            WARNING = 2,
+            ERROR = 3
+        }
+        private static int LOG_LEVEL = 0;
+
+        public static void Log(string s, LogLevel l = LogLevel.DEBUG, bool clear = false)
+        {
+            if ((int)l >= LOG_LEVEL)
+            {
+                if (clear)
+                    ClearLine();
+                Console.WriteLine(l.ToString() + "\t|" + s);
+            }
         }
 
+        static void ClearLine()
+        {
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write(new string(' ', Console.WindowWidth));
+            Console.SetCursorPosition(0, Console.CursorTop - 1);
+        }
 
     }
 }

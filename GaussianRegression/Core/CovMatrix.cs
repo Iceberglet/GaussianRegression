@@ -161,8 +161,11 @@ namespace GaussianRegression.Core
 
             mu = K_1_multiply_K_inverse.Multiply(Y).ToArray()[0, 0];
 
-            sd = K_0.Subtract(K_1_multiply_K_inverse.Multiply(K_1.Transpose())).ToArray()[0, 0];
+            var K_01 = K_1_multiply_K_inverse.Multiply(K_1.Transpose());
+            sd = K_0.Subtract(K_01).ToArray()[0, 0];
 
+
+            //****** Debugging: For Unlikely Results *****
             if (double.IsNaN(mu) || double.IsInfinity(mu))
             {
                 double det_base = K_base.Determinant();

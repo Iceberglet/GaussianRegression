@@ -14,9 +14,6 @@ namespace GaussianRegression.Core
     {
         private bool heteroscedastic;
         private bool estimateHyperPara;
-        private double lengthScale;
-        private double sigma_f;
-        private double sigma_jitter;
         
         private List<LabeledVector> list_x;
 
@@ -24,37 +21,63 @@ namespace GaussianRegression.Core
         private CovMatrix covMatrix;
 
         public GP(List<XYPair> sampledValues, List<LabeledVector> list_x, CovFunction cov_f,
-            bool estimateHyperPara = false, bool heteroscedastic = false,           //configs
-            double lengthScale = 1, double sigma_f = 1, double sigma_jitter = 1       //hyper parameters
+            List<Hyperparam> minBounds = null, List<Hyperparam> maxBounds = null,
+            bool estimateHyperPara = false, bool heteroscedastic = false, double delta = 0.005           //configs
             )
         {
             this.list_x = list_x;
             this.estimateHyperPara = estimateHyperPara;
             this.heteroscedastic = heteroscedastic;
-
-            this.lengthScale = lengthScale;
-            this.sigma_f = sigma_f;
-            if (heteroscedastic)
-                this.sigma_f = Statistics.StandardDeviation(sampledValues.Select(xy => xy.y)) / 10;
-            this.sigma_jitter = sigma_jitter;
-            var delta = 0.005;
+            
+            var sigma_f = Statistics.StandardDeviation(sampledValues.Select(xy => xy.y));
 
             this.cov_f = cov_f;
 
             if (heteroscedastic)
-                this.covMatrix = new CovMatrixHetero(cov_f, sampledValues, sigma_f, delta);
-            else this.covMatrix = new CovMatrix(cov_f, sampledValues, delta);
-
-            if (estimateHyperPara)
             {
-                ModelOptimizer mo = new ModelOptimizer(covMatrix, cov_f);
-                mo.optimize();
+                var mean = Statistics.Mean(sampledValues.Select(xy => xy.y));
+                var variational_sd = Statistics.StandardDeviation(sampledValues.Select(xy => Math.Abs(xy.y - mean)));
+                this.covMatrix = new CovMatrixHetero(cov_f, sampledValues, variational_sd, delta);
             }
+            else this.covMatrix = new CovMatrix(cov_f, sampledValues, delta);
 
             //if (heteroscedastic)
             //    ((CovMatrixHetero)covMatrix).performNoiseAnalysis();
+            if (estimateHyperPara)
+            {
+                if (minBounds == null)
+                    minBounds = new List<Hyperparam>();
+                if (maxBounds == null)
+                    maxBounds = new List<Hyperparam>();
+                initializeHyperparameterBounds(minBounds, maxBounds, sampledValues);
+                ModelOptimizer mo = new ModelOptimizer(covMatrix, cov_f, minBounds, maxBounds);
+                mo.optimize();
+            }
 
-            GPUtility.Log("Final Hypers: " + string.Join(", ", cov_f.param.Select(kv => kv.Value.value).ToArray()));
+            cov_f.param[typeof(SigmaJ)] = new SigmaJ(0.01d);
+            covMatrix.recalculate();
+
+            GPUtility.Log("Final Hypers: " + string.Join(", ", cov_f.param.Select(kv => kv.Value.value).ToArray()), GPUtility.LogLevel.DEBUG);
+
+            if (heteroscedastic)
+                ((CovMatrixHetero)covMatrix).performNoiseAnalysis();
+        }
+
+        private void initializeHyperparameterBounds(List<Hyperparam> minBounds, List<Hyperparam> maxBounds, List<XYPair> sampledValues)
+        {
+
+            if (minBounds.Find(b => b.type.Equals(typeof(LengthScale))) == null)
+                minBounds.Add(Hyperparam.createInstance(typeof(LengthScale), 0.1));
+            if (minBounds.Find(b => b.type.Equals(typeof(SigmaJ))) == null)
+                minBounds.Add(Hyperparam.createInstance(typeof(SigmaJ), 0.001));
+            if (minBounds.Find(b => b.type.Equals(typeof(SigmaF))) == null)
+                minBounds.Add(Hyperparam.createInstance(typeof(SigmaF), 0.001));
+            if (maxBounds.Find(b => b.type.Equals(typeof(LengthScale))) == null)
+                maxBounds.Add(Hyperparam.createInstance(typeof(LengthScale), 1000));
+            if (maxBounds.Find(b => b.type.Equals(typeof(SigmaJ))) == null)
+                maxBounds.Add(Hyperparam.createInstance(typeof(SigmaJ), 200));
+            if (maxBounds.Find(b => b.type.Equals(typeof(SigmaF))) == null)
+                maxBounds.Add(Hyperparam.createInstance(typeof(SigmaF), 1000));
         }
 
         //NOTE must be set null after every time GP is modified
