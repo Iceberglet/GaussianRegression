@@ -19,6 +19,7 @@ namespace GaussianRegression.Core
 
         private readonly CovFunction cov_f;
         private CovMatrix covMatrix;
+        private ModelOptimizer mo;
 
         public GP(List<XYPair> sampledValues, List<LabeledVector> list_x, CovFunction cov_f,
             List<Hyperparam> minBounds = null, List<Hyperparam> maxBounds = null,
@@ -50,7 +51,7 @@ namespace GaussianRegression.Core
                 if (maxBounds == null)
                     maxBounds = new List<Hyperparam>();
                 initializeHyperparameterBounds(minBounds, maxBounds, sampledValues);
-                ModelOptimizer mo = new ModelOptimizer(covMatrix, cov_f, minBounds, maxBounds);
+                mo = new ModelOptimizer(covMatrix, cov_f, minBounds, maxBounds);
                 mo.optimize();
             }
 
@@ -63,7 +64,7 @@ namespace GaussianRegression.Core
                 ((CovMatrixHetero)covMatrix).performNoiseAnalysis();
 
                 //For Debug Purpose
-                ((CovMatrixHetero)covMatrix).evaluateHeteroResult(list_x);
+                //((CovMatrixHetero)covMatrix).evaluateHeteroResult(list_x);
             }
 
         }
@@ -88,10 +89,20 @@ namespace GaussianRegression.Core
         //NOTE must be set null after every time GP is modified
         private Dictionary<LabeledVector, NormalDistribution> lastPredict = null;
 
+        private static readonly int RE_OPTIMIZE_THRESHOLD = 15;
+        int current_optimize_number = RE_OPTIMIZE_THRESHOLD;
         public void addPoint(XYPair newPair)
         {
             covMatrix.addX(newPair);
             lastPredict = null;
+            if(current_optimize_number == RE_OPTIMIZE_THRESHOLD)
+            {
+                current_optimize_number = 0;
+            } else
+            {
+                ((CovMatrixHetero)covMatrix).optimize();
+                current_optimize_number++;
+            }
         }
 
         public Dictionary<LabeledVector, NormalDistribution> predict()

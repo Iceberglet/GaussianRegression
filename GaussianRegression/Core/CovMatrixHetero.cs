@@ -36,6 +36,10 @@ namespace GaussianRegression.Core
         public override void addX(XYPair pair)
         {
             base.addX(pair);
+        }
+
+        public void optimize()
+        {
             this.performNoiseAnalysis();
         }
 
@@ -43,13 +47,14 @@ namespace GaussianRegression.Core
         private static readonly int HETEROSCEDASTIC_POINT_SAMPLE_SIZE = 20;
         private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.003;
         List<XYPair> noise_z = new List<XYPair>();
+        
 
         //Using Most Likely Heteroscedastic Approach
         //http://www.machinelearning.org/proceedings/icml2007/papers/326.pdf
         public void performNoiseAnalysis()
         {
-            bool optimized = false;
             int counter = 0;
+            bool optimized = false;
             double previousNoiseSum = 0;
             bool converged = false;
             Dictionary<Vector<double>, NormalDistribution> resulting_z = new Dictionary<Vector<double>, NormalDistribution>();
@@ -100,10 +105,11 @@ namespace GaussianRegression.Core
                 //2. Construct another Gaussian CovMatrix to evaluate noise
                 //********** TODO: alter the covariance func instead of using the given one!
                 matrixForNoise = new CovMatrix(cf_noise, noise_z, delta);
-                if (!optimized)
+                if (optimized)
                 {
                     ModelOptimizer mo = new ModelOptimizer(matrixForNoise, cf_noise, null, null);
                     mo.optimize();
+                    cf_noise.param[typeof(SigmaJ)] = new SigmaJ(0.01d);
                     optimized = true;
                 }
                 //3. Update the diagonal matrices for this

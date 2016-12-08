@@ -83,6 +83,12 @@ namespace GaussianRegression
             {
                 var idx = sols.Count / num * i;
                 var sol = sols.ElementAt(idx);
+                if (sampled.Contains(sol))
+                {
+                    GPUtility.Log("Failed to add a sample", GPUtility.LogLevel.DEBUG);
+                    continue;
+                }
+                sampled.Add(sol);
                 myGP.addPoint(new XYPair(GPUtility.V(sol.LFRank), sol.HFValue));
                 res = myGP.predict();
             }*/
