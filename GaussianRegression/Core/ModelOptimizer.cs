@@ -115,6 +115,7 @@ namespace GaussianRegression.Core
                 covMatrix.recalculate();
                 reboot();
             }
+            cf.param[typeof(SigmaJ)] = new SigmaJ(0.01d);
         }
 
         internal void evaluateLog(Dictionary<Type, Tuple<Hyperparam, Hyperparam>> dicts)

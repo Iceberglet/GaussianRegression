@@ -23,10 +23,10 @@ namespace GaussianRegression.Core
 
             //var ls = cf.param.ContainsKey(typeof(LengthScale)) ? (LengthScale)cf.param[typeof(LengthScale)] : new LengthScale(10) ;
             var ls = (LengthScale)cf.param[typeof(LengthScale)];
-            this.cf_noise = CovFunction.SquaredExponential(new LengthScale(ls.value), new SigmaF(this.indicativeSd)) + CovFunction.GaussianNoise(new SigmaJ(0.5));
-            var initialNoise = list_xy.Select(xy => new XYPair(xy.x, indicativeSd)).ToList();
+            this.cf_noise = CovFunction.SquaredExponential(new LengthScale(ls.value), new SigmaF(this.indicativeSd)) + CovFunction.GaussianNoise(new SigmaJ(0.01));
+            var initialNoise = list_xy.Select(xy => new XYPair(xy.x, 0)).ToList();
             var diag = Enumerable.Repeat(0d, list_xy.Count).ToArray();
-            matrixForNoise = new CovMatrix(cf_noise, initialNoise, delta);
+            matrixForNoise = null;
             K_diag = Matrix<double>.Build.Diagonal(diag);
             K_base = K_base;
             //this.performNoiseAnalysis();
@@ -48,6 +48,7 @@ namespace GaussianRegression.Core
         //http://www.machinelearning.org/proceedings/icml2007/papers/326.pdf
         public void performNoiseAnalysis()
         {
+            bool optimized = false;
             int counter = 0;
             double previousNoiseSum = 0;
             bool converged = false;
@@ -99,6 +100,12 @@ namespace GaussianRegression.Core
                 //2. Construct another Gaussian CovMatrix to evaluate noise
                 //********** TODO: alter the covariance func instead of using the given one!
                 matrixForNoise = new CovMatrix(cf_noise, noise_z, delta);
+                if (!optimized)
+                {
+                    ModelOptimizer mo = new ModelOptimizer(matrixForNoise, cf_noise, null, null);
+                    mo.optimize();
+                    optimized = true;
+                }
                 //3. Update the diagonal matrices for this
 
                 this.updateNoise(noise_z);
@@ -110,6 +117,8 @@ namespace GaussianRegression.Core
         //For Debug Purpose Only
         public void evaluateHeteroResult(List<LabeledVector> list_x)
         {
+            if (matrixForNoise == null)
+                return;
             //Design points
             var varPredictions = new Dictionary<LabeledVector, double>();
             list_x.ForEach(x => varPredictions.Add(x, matrixForNoise.getPosterior(x.x).mu));
@@ -147,7 +156,7 @@ namespace GaussianRegression.Core
         {
             var res = base.getPosterior(x_0);
             //The R term in machine learning paper eq.(2)
-            var moreSD = Math.Exp(matrixForNoise.getPosterior(x_0).mu);     //Notice the Exp
+            var moreSD = matrixForNoise == null? 0 : Math.Exp(matrixForNoise.getPosterior(x_0).mu);     //Notice the Exp
             return new NormalDistribution(res.mu, Math.Sqrt(res.sd * res.sd + moreSD * moreSD));
         }
 

@@ -54,7 +54,6 @@ namespace GaussianRegression.Core
                 mo.optimize();
             }
 
-            cov_f.param[typeof(SigmaJ)] = new SigmaJ(0.01d);
             covMatrix.recalculate();
 
             GPUtility.Log("Final Hypers: " + string.Join(", ", cov_f.param.Select(kv => kv.Value.value).ToArray()), GPUtility.LogLevel.DEBUG);

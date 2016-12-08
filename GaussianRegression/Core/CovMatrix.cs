@@ -16,7 +16,7 @@ namespace GaussianRegression.Core
             get; private set;
         }
 
-        protected Matrix<double> K;
+        protected Matrix<double> K;           //K = K_Base + K_diag
         protected Matrix<double> K_base       //A Square Matrix (without input dependent diagonal noise term)
         {
             get { return K_B; }

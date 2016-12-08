@@ -150,11 +150,11 @@ namespace GaussianRegression
             CovFunction cf = CovFunction.SquaredExponential(new LengthScale(5), new SigmaF(10)) + CovFunction.GaussianNoise(new SigmaJ(0.5));
 
             GP myGP = new GP(sampledValues: values, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
-                heteroscedastic: true, estimateHyperPara: true
+                heteroscedastic: false, estimateHyperPara: true
                 );
             var res = myGP.predict();
 
-            FileService fs = new FileService("Test.csv");
+            FileService fs = new FileService("Test-Motor.csv");
 
             fs.writeToFile(FileService.convertGPResult(res, values));
         }
