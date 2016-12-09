@@ -29,6 +29,7 @@ namespace GaussianRegression.Core
             matrixForNoise = null;
             K_diag = Matrix<double>.Build.Diagonal(diag);
             K_base = K_base;
+            this.updateNoise_z();
             //this.performNoiseAnalysis();
         }
 
@@ -36,6 +37,8 @@ namespace GaussianRegression.Core
         public override void addX(XYPair pair)
         {
             base.addX(pair);
+            this.updateNoise_z();
+            this.updateNoise(noise_z);
         }
 
         public void optimize()
@@ -47,6 +50,35 @@ namespace GaussianRegression.Core
         private static readonly int HETEROSCEDASTIC_POINT_SAMPLE_SIZE = 20;
         private static readonly double HETEROSCEDASTIC_CONVERGENCE_PERCENTAGE = 0.003;
         List<XYPair> noise_z = new List<XYPair>();
+
+        private void updateNoise_z()
+        {
+            noise_z = new List<XYPair>();  //Note: the y here refers to the noise term
+            List<XYPair> knownPoints = this.xyPairs.ToList();
+
+            Dictionary<Vector<double>, NormalDistribution> dictForSampled = new Dictionary<Vector<double>, NormalDistribution>();
+            knownPoints.ForEach(x => {
+                dictForSampled.Add(x.x, this.getPosterior(x.x));
+            });
+
+            foreach (XYPair xyPair in knownPoints)
+            {
+                NormalDistribution nd = dictForSampled[xyPair.x];  // current estimate
+                double varEstimate = 0;
+
+                for (int i = 0; i < HETEROSCEDASTIC_POINT_SAMPLE_SIZE; i++)
+                {
+                    double sample = Normal.InvCDF(nd.mu, nd.sd, GPUtility.NextProba());
+                    varEstimate += Math.Pow((xyPair.y - sample), 2);
+                }
+                varEstimate *= 0.5 / HETEROSCEDASTIC_POINT_SAMPLE_SIZE;
+                varEstimate = Math.Sqrt(varEstimate);   //Back to SD
+
+                //the new GP is performed on the logarithm of SD - so the SD is always positive
+                varEstimate = Math.Log(varEstimate);
+                noise_z.Add(new XYPair(xyPair.x, varEstimate));
+            }
+        }
         
 
         //Using Most Likely Heteroscedastic Approach
@@ -63,32 +95,8 @@ namespace GaussianRegression.Core
             {
                 GPUtility.Log("Heteroscedastic Iter: " + counter, GPUtility.LogLevel.DEBUG);
 
-                //1. Get Empirical Noise at all sampled points on GP_0
-                noise_z = new List<XYPair>();  //Note: the y here refers to the noise term
-                List<XYPair> knownPoints = this.xyPairs.ToList();
-
-                Dictionary<Vector<double>, NormalDistribution> dictForSampled = new Dictionary<Vector<double>, NormalDistribution>();
-                knownPoints.ForEach(x => {
-                    dictForSampled.Add(x.x, this.getPosterior(x.x));
-                });
-
-                foreach (XYPair xyPair in knownPoints)
-                {
-                    NormalDistribution nd = dictForSampled[xyPair.x];  // current estimate
-                    double varEstimate = 0;
-
-                    for (int i = 0; i < HETEROSCEDASTIC_POINT_SAMPLE_SIZE; i++)
-                    {
-                        double sample = Normal.InvCDF(nd.mu, nd.sd, GPUtility.NextProba());
-                        varEstimate += Math.Pow((xyPair.y - sample), 2);
-                    }
-                    varEstimate *= 0.5 / HETEROSCEDASTIC_POINT_SAMPLE_SIZE;
-                    varEstimate = Math.Sqrt(varEstimate);   //Back to SD
-
-                    //the new GP is performed on the logarithm of SD - so the SD is always positive
-                    varEstimate = Math.Log(varEstimate);
-                    noise_z.Add(new XYPair(xyPair.x, varEstimate));
-                }
+                //Noise z should be updated
+                this.updateNoise_z();
 
                 var nextNoiseSum = noise_z.Sum(n => n.y * n.y);
                 var currentError = Math.Abs(previousNoiseSum - nextNoiseSum) / nextNoiseSum;
@@ -100,7 +108,7 @@ namespace GaussianRegression.Core
                 {
                     previousNoiseSum = nextNoiseSum;
                 }
-                GPUtility.Log("Current Error " + currentError, GPUtility.LogLevel.DEBUG);
+                GPUtility.Log("Current Error " + currentError + " Prev: " + previousNoiseSum + " Curr: " + nextNoiseSum, GPUtility.LogLevel.DEBUG);
 
                 //2. Construct another Gaussian CovMatrix to evaluate noise
                 //********** TODO: alter the covariance func instead of using the given one!

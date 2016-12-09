@@ -60,7 +60,7 @@ namespace GaussianRegression
             };
 
 
-            var num = 50;
+            var num = 20;
             var sols = Xu2014(gg);
             var sampled = new List<Solution>();
             
@@ -78,10 +78,10 @@ namespace GaussianRegression
                     );
             var res = myGP.predict();
 
-            /*
-            for (int i = 0; i < num; i++)
+            
+            for (int i = 0; i < 50; i++)
             {
-                var idx = sols.Count / num * i;
+                var idx = sols.Count / 50 * i;
                 var sol = sols.ElementAt(idx);
                 if (sampled.Contains(sol))
                 {
@@ -91,12 +91,10 @@ namespace GaussianRegression
                 sampled.Add(sol);
                 myGP.addPoint(new XYPair(GPUtility.V(sol.LFRank), sol.HFValue));
                 res = myGP.predict();
-            }*/
+                FileService fs = new FileService("TestXu2014-" + (i+20)  +".csv");
 
-
-            FileService fs = new FileService("TestXu2014.csv");
-
-            fs.writeToFile(FileService.convertGPResult(res, initial));
+                fs.writeToFile(FileService.convertGPResult(res, initial));
+            }
         }
         public static void testSimple()
         {
@@ -156,7 +154,7 @@ namespace GaussianRegression
             CovFunction cf = CovFunction.SquaredExponential(new LengthScale(5), new SigmaF(10)) + CovFunction.GaussianNoise(new SigmaJ(0.5));
 
             GP myGP = new GP(sampledValues: values, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
-                heteroscedastic: false, estimateHyperPara: true
+                heteroscedastic: true, estimateHyperPara: true
                 );
             var res = myGP.predict();
 
@@ -184,25 +182,19 @@ namespace GaussianRegression
                 double y = f(i);
                 XYPair newPair = new XYPair(newX, y);
 
-                xyPairs.Add(newPair);
                 if (rand.NextDouble() < 0.15)
                     sampled.Add(newPair);
+                else
+                    xyPairs.Add(newPair);
             }
-            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(20), new SigmaF(1)) + CovFunction.GaussianNoise(new SigmaJ(0.1));
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(100), new SigmaF(1000)) + CovFunction.GaussianNoise(new SigmaJ(100));
 
             GP myGP = new GP(sampledValues: sampled, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
                 heteroscedastic: true, estimateHyperPara: true
                 );
             var res = myGP.predict();
 
-            FileService fs = new FileService("Test.csv");
-            
-            /*
-            CovMatrix covMatrix = new CovMatrix(cf, sampled);
-            Dictionary<Vector<double>, NormalDistribution> res = new Dictionary<Vector<double>, NormalDistribution>();
-            xyPairs.ForEach(xy => {
-                res.Add(xy.x, covMatrix.getPosterior(xy.x));
-            });*/
+            FileService fs = new FileService("TestComplex.csv");
 
             fs.writeToFile(FileService.convertGPResult(res, sampled));
         }
