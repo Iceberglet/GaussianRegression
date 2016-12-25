@@ -16,10 +16,11 @@ namespace GaussianRegression
         static void Main(string[] args)
         {
             //Test.testComplex();
-            Test.testXu2014(2);
+            //Test.testXu2014(2);
             //Test.testMotor();
             //Test.testSimple();
             //Test.testHyperparameterEstimation();
+            Test.testAnother();
             /*
             var x1 = GPUtility.V(1);
             var x2 = GPUtility.V(0);
@@ -32,7 +33,13 @@ namespace GaussianRegression
             cf.param[typeof(SigmaJ)] = Hyperparam.createInstance(typeof(SigmaJ), 20);
             Utility.Log("After: L: " + cf.param[typeof(LengthScale)].value);
             Utility.Log("After: F: " + cf.f(x1, x2));*/
+            
 
+            /*
+            Console.WriteLine(nd.getExpectedImprovement(-5, false));
+            Console.WriteLine(nd.getExpectedImprovement(0, false));
+            Console.WriteLine(nd.getExpectedImprovement(5, false));
+            */
             Console.WriteLine("End of Execution.");
             Console.ReadLine();
         }

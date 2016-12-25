@@ -87,7 +87,7 @@ namespace GaussianRegression
             return res.ToArray();
         }
 
-        public static List<XYPair> readFromFile(string fileName, int xSize = 1, char separator = ' ')
+        public static List<XYPair> readFromFile(string fileName, int xSize = 1, int xFrom = 0, int yAt = 1, char separator = ' ')
         {
             //Console.WriteLine(Path.GetTempPath());
             //Console.WriteLine(Directory.GetCurrentDirectory());
@@ -97,22 +97,21 @@ namespace GaussianRegression
             List<XYPair> xy = new List<XYPair>();
             foreach (var row in input_grid.Split('\n'))
             {
+                //GPUtility.Log(row);
                 List<double> x = new List<double>();
                 int xIdx = 0;
                 foreach (var col in row.Trim().Split(separator))
                 {
-                    if (xIdx < xSize)
+                    if (xIdx >= xFrom && xIdx < xSize + xFrom)
                     {
                         x.Add(double.Parse(col.Trim()));
-                        xIdx++;
-                        continue;
                     }
-                    else
+                    else if(xIdx == yAt)
                     {
                         double y = double.Parse(col.Trim());
                         xy.Add(new XYPair(Vector<double>.Build.DenseOfEnumerable(x), y));
-                        break;
                     }
+                    xIdx++;
                 }
             }
             return xy;

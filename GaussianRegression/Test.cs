@@ -218,5 +218,34 @@ namespace GaussianRegression
             Console.WriteLine("a and a_prime differential w.r.t SigmaJ: " + cf2.differential(typeof(SigmaJ))(a, a_prime));
             //Console.WriteLine("a and c gives: " + cf2.f(a, c));
         }
+
+        public static void testAnother()
+        {
+            List<XYPair> values = FileService.readFromFile("test.txt", separator: '\t', yAt: 2, xFrom: 0);
+            List<XYPair> sampled = new List<XYPair>();
+            List<Vector<double>> list_x = new List<Vector<double>>();
+            //x value from 1 to 800
+            for (int i = 0; i < 800; i++)
+            {
+                list_x.Add(values.ElementAt(i).x);
+            }
+            for (int i = 0; i < 50; i++)
+            {
+                sampled.Add(values.ElementAt(values.Count / 50 * i));
+            }
+
+            //var SF = Math.Sqrt(Statistics.Variance(values.Select(xy => xy.y))) / 2;
+            //Utility.Log("Variance determined as: " + SF);
+            CovFunction cf = CovFunction.SquaredExponential(new LengthScale(260), new SigmaF(300)) + CovFunction.GaussianNoise(new SigmaJ(50));
+            
+            GP myGP = new GP(sampledValues: sampled, list_x: list_x.Select(x => new LabeledVector(0, x)).ToList(), cov_f: cf,
+                heteroscedastic: true, estimateHyperPara: false
+                );
+            var res = myGP.predict();
+
+            FileService fs = new FileService("Test-example.csv");
+
+            fs.writeToFile(FileService.convertGPResult(res, sampled));
+        }
     }
 }
