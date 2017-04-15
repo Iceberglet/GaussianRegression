@@ -1,6 +1,11 @@
 A Gaussian Regression Library
 =============================
 
+IMPORTANT NOTE:
+For Ordinal Transformation Research Usage, Take the "ForOT" branch.
+Set up dependencies in your project that needs to reference this library.
+(Usually by pointing at the executable from the test build is sufficient)
+
 Usage
 -----
 
