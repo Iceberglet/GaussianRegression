@@ -13,7 +13,7 @@ namespace GaussianRegression.Core
     {
         public static CovFunction SquaredExponential(LengthScale L, SigmaF SF)
         {
-            CovFunction res = null;
+            CovFunction res = null; //Declared at top in order to allow the following functions to have reference at compile time
             Func<Vector<double>, Vector<double>, double> newF = (a, b) =>
             {
                 var l = res == null ? L.value : res.param[typeof(LengthScale)].value;
@@ -23,7 +23,7 @@ namespace GaussianRegression.Core
                 double d = (a - b).L2Norm();
                 return sigma2 * Math.Exp(-d * d / l2);
             };
-            
+
             Func<Type, Func<Vector<double>, Vector<double>, double>> newDiff = (t) =>
             {
                 var l = res == null ? L.value : res.param[typeof(LengthScale)].value;
@@ -48,7 +48,7 @@ namespace GaussianRegression.Core
                 else return (a, b) => 0;
             };
 
-            res = new CovFunction(newF, newDiff);
+            res = new CovFunction(newF, newDiff); //Now the actual declaration
             res.addParams(L, SF);
             return res;
         }
@@ -108,7 +108,7 @@ namespace GaussianRegression.Core
                 this.param[i.type] =  i;
             }
         }
-        
+
         private CovFunction(Func<Vector<double>, Vector<double>, double> f,
             Func<Type, Func<Vector<double>, Vector<double>, double>> diff
             )

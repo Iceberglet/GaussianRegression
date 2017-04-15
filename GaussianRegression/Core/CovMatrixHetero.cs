@@ -23,6 +23,8 @@ namespace GaussianRegression.Core
 
             //var ls = cf.param.ContainsKey(typeof(LengthScale)) ? (LengthScale)cf.param[typeof(LengthScale)] : new LengthScale(10) ;
             var ls = (LengthScale)cf.param[typeof(LengthScale)];
+
+            //By design, we use squared exponential for GP_1 that estimates the error term.
             this.cf_noise = CovFunction.SquaredExponential(new LengthScale(ls.value), new SigmaF(this.indicativeSd)) + CovFunction.GaussianNoise(new SigmaJ(0.01));
             var initialNoise = list_xy.Select(xy => new XYPair(xy.x, 0)).ToList();
             var diag = Enumerable.Repeat(0d, list_xy.Count).ToArray();

@@ -17,10 +17,10 @@ namespace GaussianRegression
         {
             //Test.testComplex();
             //Test.testXu2014(2);
-            //Test.testMotor();
+            Test.testMotor();
             //Test.testSimple();
             //Test.testHyperparameterEstimation();
-            Test.testAnother();
+            //Test.testAnother();
             /*
             var x1 = GPUtility.V(1);
             var x2 = GPUtility.V(0);
